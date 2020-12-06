@@ -42,17 +42,20 @@ function start (req, res, next) {
     }, {
         jsonp: function (data) {
             if (data.ret == 0) {
-                if (process.platform.indexOf("win") != -1) {
-                    doUpdate(getIPAdress());
-                } else {
-                    cp.exec('pppoe-stop', function (err, stdout, stderr) {
-                        cp.exec('pppoe-start', function (err1, stdout1, stderr1) {
-                            // console.log(getIPAdress());
-                            // 开始写入db
-                            doUpdate(getIPAdress());
+                // 10分钟之后，切换ip
+                setTimeout(function () {
+                    if (process.platform.indexOf("win") != -1) {
+                        doUpdate(getIPAdress());
+                    } else {
+                        cp.exec('pppoe-stop', function (err, stdout, stderr) {
+                            cp.exec('pppoe-start', function (err1, stdout1, stderr1) {
+                                // console.log(getIPAdress());
+                                // 开始写入db
+                                doUpdate(getIPAdress());
+                            });
                         });
-                    });
-                }
+                    }
+                }, 10 * 60 * 1000);
             } else {
                 // 去掉失败了
                 res.jsonp({ret: 1, msg: "close error"});
