@@ -6,5 +6,9 @@ function dotask () {
     });
 }
 // 立即执行一次
-dotask();
-setInterval(dotask, 10000);
+setTimeout(function () {
+    dotask();
+}, 30000);
+
+// 10个小时执行一次
+setInterval(dotask, 1000 * 60 * 60 * 10);
