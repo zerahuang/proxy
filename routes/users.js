@@ -4,6 +4,8 @@ var config = require('../config');
 var mysql = require('mysql');
 var pool = mysql.createPool(process.platform.indexOf("win") != -1 ? config.dbconfig_local : config.dbconfig_idc);
 var fs = require("fs");
+var cp = require('child_process');
+var os = require('os');
 
 /* GET users listing. */
 router.get('*', function(req, res, next) {
@@ -32,7 +34,68 @@ function start (req, res, next) {
     // pool.query("show tables", function (err, data) {
     //     res.jsonp({err, data});
     // });
-    
+    // 先把之前的ip去掉
+    stop({
+        query: {
+            ip: getIPAdress()
+        }
+    }, {
+        jsonp: function (data) {
+            if (data.ret == 0) {
+                if (process.platform.indexOf("win") != -1) {
+                    doUpdate(getIPAdress());
+                } else {
+                    cp.exec('pppoe-stop', function (err, stdout, stderr) {
+                        cp.exec('pppoe-start', function (err1, stdout1, stderr1) {
+                            // console.log(getIPAdress());
+                            // 开始写入db
+                            doUpdate(getIPAdress());
+                        });
+                    });
+                }
+            } else {
+                // 去掉失败了
+                res.jsonp({ret: 1, msg: "close error"});
+            }
+        }
+    });
+
+    // 更新
+    function doUpdate (nowip) {
+        pool.query("select * from basicinfo where b_key = ?", ["ips"] , function (err, data) {
+            // 判断是否存在
+            if (err || (data && data.length == 0)) {
+                // 有问题
+                res.jsonp({ret: 3, msg: "query error"});
+            } else {
+                try {
+                    var ips = JSON.parse(data[0].b_value);
+                    // 判断是否有
+                    if (!ips.some(function (ceil, index) {
+                        if (ceil.ip == nowip) {
+                            return true;
+                        }
+                    })) {
+                        ips.push({
+                            ip: nowip,
+                            w: fs.readFileSync('weight.txt').toString(),
+                            n: fs.readFileSync('name.txt').toString()
+                        });
+                    }
+                    // 重新写入
+                    pool.query("update basicinfo set b_value = ? where b_key = ?", [JSON.stringify(ips), "ips"], function (err1, data1) {
+                        if (err1) {
+                            res.jsonp({ret: 5, err: err1});
+                        } else {
+                            res.jsonp({ret: 0, data: ips});
+                        }
+                    });
+                } catch(e) {
+                    res.jsonp({ret: 4, msg: "parse error"});
+                }
+            }
+        });
+    }
 }
 
 // 移出DB
@@ -123,6 +186,22 @@ function cwight (req, res, next) {
 function pm2restart (req, res, next) {
     res.jsonp({ret: new Date().toGMTString()});
     fs.writeFile('./pm2tostart/starttime.txt', new Date().toGMTString(), function () {});
+}
+
+// 获得ip
+function getIPAdress () {
+    var interfaces = os.networkInterfaces();
+    for (var devName in interfaces) {
+        if (devName != 'eth0') {
+            var iface = interfaces[devName];
+            for (var i = 0; i < iface.length; i++) {
+                var alias = iface[i];
+                if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal) {
+                    return alias.address;
+                }
+            }
+        }
+    }
 }
 
 module.exports = router;
