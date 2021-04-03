@@ -43,19 +43,22 @@ function start (req, res, next) {
         jsonp: function (data) {
             if (data.ret == 0) {
                 // 10分钟之后，切换ip
+                console.log(process.platform, process.platform.indexOf("win"), getIPAdress());
                 setTimeout(function () {
                     if (process.platform.indexOf("win") != -1) {
                         doUpdate(getIPAdress());
                     } else {
                         cp.exec('pppoe-stop', function (err, stdout, stderr) {
+                            console.log('pppoe-stop:', err, stdout, stderr);
                             cp.exec('pppoe-start', function (err1, stdout1, stderr1) {
+                                console.log('pppoe-start:', err1, stdout1, stderr1);
                                 // console.log(getIPAdress());
                                 // 开始写入db
                                 doUpdate(getIPAdress());
                             });
                         });
                     }
-                }, 10 * 60 * 1000);
+                }, 1 * 60 * 1000);
             } else {
                 // 去掉失败了
                 res.jsonp({ret: 1, msg: "close error"});
