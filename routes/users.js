@@ -21,6 +21,9 @@ router.get('*', function(req, res, next) {
     case "cwight":
         cwight(req, res, next);
         break;
+    case "asyncip":
+        asyncip(req, res, next);
+        break;
     case "pm2restart":
         pm2restart(req, res, next);
         break;
@@ -37,28 +40,27 @@ function start (req, res, next) {
     // 先把之前的ip去掉
     stop({
         query: {
-            ip: getIPAdress()
+            name: fs.readFileSync('name.txt').toString().replace(/\n$/, '')
         }
     }, {
         jsonp: function (data) {
             if (data.ret == 0) {
-                // 10分钟之后，切换ip
-                console.log(process.platform, process.platform.indexOf("win"), getIPAdress());
-                setTimeout(function () {
-                    if (process.platform.indexOf("win") != -1) {
-                        doUpdate(getIPAdress());
-                    } else {
+                // 1分钟之后，切换ip
+                if (process.platform.indexOf("win") != -1 || req.query.type == 1) {
+                    doUpdate(getIPAdress());
+                } else {
+                    setTimeout(function () {
                         cp.exec('pppoe-stop', function (err, stdout, stderr) {
-                            console.log('pppoe-stop:', err, stdout, stderr);
+                            console.log('pppoe-stop:', new Date().toLocaleString(), err, stdout, stderr);
                             cp.exec('pppoe-start', function (err1, stdout1, stderr1) {
-                                console.log('pppoe-start:', err1, stdout1, stderr1);
+                                console.log('pppoe-start:', new Date().toLocaleString(), err1, stdout1, stderr1);
                                 // console.log(getIPAdress());
                                 // 开始写入db
                                 doUpdate(getIPAdress());
                             });
                         });
-                    }
-                }, 1 * 60 * 1000);
+                    }, 1 * 60 * 1000);
+                }
             } else {
                 // 去掉失败了
                 res.jsonp({ret: 1, msg: "close error"});
@@ -84,8 +86,8 @@ function start (req, res, next) {
                     })) {
                         ips.push({
                             ip: nowip,
-                            w: fs.readFileSync('weight.txt').toString(),
-                            n: fs.readFileSync('name.txt').toString()
+                            w: +fs.readFileSync('weight.txt').toString(),
+                            n: fs.readFileSync('name.txt').toString().replace(/\n$/, '')
                         });
                     }
                     // 重新写入
@@ -108,7 +110,7 @@ function start (req, res, next) {
 function stop (req, res, next) {
     // res.jsonp({aa: 22});
     // 需要有ip地址
-    if (!req.query.ip) {
+    if (!req.query.name) {
         res.jsonp({ret: 1, msg: "param error"});
         return false;
     }
@@ -122,7 +124,7 @@ function stop (req, res, next) {
                 var ips = JSON.parse(data[0].b_value);
                 // 移除
                 ips.some(function (ceil, index) {
-                    if (ceil.ip == req.query.ip) {
+                    if (ceil.n.replace(/\n$/, '') == decodeURIComponent(req.query.name).replace(/\n$/, '')) {
                         ips.splice(index, 1);
                         return true;
                     }
@@ -144,7 +146,7 @@ function stop (req, res, next) {
 
 // 改变权重，写入DB和config.txt
 function cwight (req, res, next) {
-    if (!(req.query.w && req.query.ip)) {
+    if (!(req.query.w && req.query.name)) {
         res.jsonp({ret: 1, msg: "param error"});
         return false;
     }
@@ -165,7 +167,7 @@ function cwight (req, res, next) {
                         var ips = JSON.parse(data[0].b_value);
                         // 更新
                         ips.some(function (ceil, index) {
-                            if (ceil.ip == req.query.ip) {
+                            if (ceil.n.replace(/\n$/, '') == decodeURIComponent(req.query.name).replace(/\n$/, '')) {
                                 ceil.w = +req.query.w;
                                 return true;
                             }
@@ -186,6 +188,19 @@ function cwight (req, res, next) {
         }
     });
     // res.jsonp({aa: data.toString()});
+}
+
+// 每隔2s同步一次，是否ip不一致
+function asyncip (req, res, next) {
+    start({
+        query: {
+            type: 1
+        }
+    }, {
+        jsonp: function (data) {
+            res.jsonp(data);
+        }
+    });
 }
 
 // PM2监控改动，自动重启
