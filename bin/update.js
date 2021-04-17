@@ -521,7 +521,7 @@ function $addZero(v,size){
 // 每隔5分钟查询一次
 setInterval(function () {
   doUpdate();
-}, 5 * 60 * 1000);
+}, 3 * 60 * 1000);
 
 
 doUpdate();
