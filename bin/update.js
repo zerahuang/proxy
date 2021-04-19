@@ -99,7 +99,8 @@ function doit (item, callback) {
     } else if (item.name.indexOf("pufei--") != -1) {
       comicRoute.buildComic4({
         query: {
-          comicid: item.name.replace("pufei--", "")
+          comicid: item.name.replace("pufei--", ""),
+          type: 1
         }
       }, {
         jsonp: function (data) {
@@ -478,7 +479,7 @@ function doUpdate () {
     }
   }, {
     updatetime: {
-      value: $formatDate(new Date(new Date() - 3 * 24 * 60 * 60 * 1000), "YYYY-MM-DD HH:II:SS"),
+      value: $formatDate(new Date(new Date() - 2 * 24 * 60 * 60 * 1000), "YYYY-MM-DD HH:II:SS"),
       type: "<"
     },
     isover: [{

@@ -1907,7 +1907,7 @@ exports.buildComic4 = function (req, res, next) {
     	try {
 	        data = data.replace(/[\r\n\t]/g,"");
 	        // console.log(data.match(/chapter-list-1(?:(?!<\/ul>).)+<\/ul>/)[0]);
-	        var temChars = data.match(/<li><a href="\/manhua\/[^>]+/g);
+	        var temChars = data.match(/<li><a href="\/manhua\/(?:(?!\.html).)+\.html[^>]+/g);;
 	        var charactors = [];
 	        temChars.forEach(function (ceil) {
 	            charactors.push({
