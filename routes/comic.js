@@ -1895,7 +1895,7 @@ exports.buildComic4 = function (req, res, next) {
 	}
 
     // https://www.mh1234.com/comic/18015.html
-    var link = "http://m.pufei8.com/manhua/" + req.query.comicid;
+    var link = "http://m.pufei.cc/manhua/" + req.query.comicid;
     requestTry(link, function (err, data) {
     	if (err) {
     		res.jsonp({
@@ -1911,7 +1911,7 @@ exports.buildComic4 = function (req, res, next) {
 	        var charactors = [];
 	        temChars.forEach(function (ceil) {
 	            charactors.push({
-	                url: "http://m.pufei8.com" + ceil.match(/href="([^"]+)"/)[1],
+	                url: "http://m.pufei.cc" + ceil.match(/href="([^"]+)"/)[1],
 	                // name: ceil.match(/>([^>]+)<i>/)[1]
 	                name: ceil.match(/title="([^"]+)"/)[1]
 	            });
