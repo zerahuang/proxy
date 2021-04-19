@@ -99,8 +99,7 @@ function doit (item, callback) {
     } else if (item.name.indexOf("pufei--") != -1) {
       comicRoute.buildComic4({
         query: {
-          comicid: item.name.replace("pufei--", ""),
-          type: 1
+          comicid: item.name.replace("pufei--", "")
         }
       }, {
         jsonp: function (data) {
