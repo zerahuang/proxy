@@ -5994,7 +5994,7 @@ exports.search = function (req, res, next) {
 			}, 8000);
 
 			// 去mh1234搜索
-			request("https://m.mh1234.com/search/?keywords=" + encodeURIComponent(req.query.comic), function (err, data0) {
+			request("http://m.pufei.cc/e/search/?searchget=1&tbname=mh&show=title,player,playadmin,bieming,pinyin,playadmin&tempid=4&keyboard=" + encodeURIComponent(req.query.comic), function (err, data0) {
 			// 去toho搜一下
 			// request("https://m.tohomh123.com/action/Search?page=1&keyword=" + encodeURIComponent(req.query.comic), function (err, data0) {
 		        // 回来之后，就把计时器去掉

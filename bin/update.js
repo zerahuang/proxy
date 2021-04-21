@@ -219,8 +219,7 @@ function doit (item, callback) {
     } else if (item.name.indexOf("youma--") != -1) {
       comicRoute.buildComic5({
         query: {
-          comicname: item.z_ch_name,
-          type: 1
+          comicname: item.z_ch_name
         }
       }, {
         jsonp: function (data) {

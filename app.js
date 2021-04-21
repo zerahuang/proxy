@@ -21,7 +21,34 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/routes', usersRouter);
-
+app.use("/sanpk", function (req, res, next) {
+    //所有动态请求的入口
+    /*
+     做了简单的改造，可以匹配/action,method然后调用对应的模块暴露出来的接口
+    */
+    var reqRoute = path.normalize(process.cwd() + "/routes" + req.url.replace(/\//g, "/").replace(/\?.*/, ""));
+    // console.log(reqRoute);
+    var _reqArr  = reqRoute.split(/[,-]/);
+    reqRoute     = _reqArr.length > 1 ? _reqArr[0] : reqRoute;
+    var method   = _reqArr.length > 1 ? _reqArr[1] : "init";
+    
+    try {
+        // console.log(reqRoute);
+        //先去尝试是否有对应的routes
+        var appModule = require(reqRoute);
+        appModule[method](req, res, next);
+    } catch (e) {
+        if (e.message == "Cannot find module '" + reqRoute + "'") {
+            next();
+        } else {
+            //如果是模块里面出错，则直接打出出错信息
+            res.render("error", {
+                message: e.message,
+                error  : e
+            });
+        }
+    }
+});
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));
