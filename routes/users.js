@@ -44,7 +44,7 @@ function start (req, res, next) {
         }
     }, {
         jsonp: function (data) {
-            if (data.ret == 0) {
+            // if (data.ret == 0) {
                 // 1分钟之后，切换ip
                 if (process.platform.indexOf("win") != -1 || req.query.type == 1) {
                     doUpdate(getIPAdress());
@@ -61,10 +61,10 @@ function start (req, res, next) {
                         });
                     }, 1 * 60 * 1000);
                 }
-            } else {
-                // 去掉失败了
-                res.jsonp({ret: 1, msg: "close error"});
-            }
+            // } else {
+            //     // 去掉失败了
+            //     res.jsonp({ret: 1, msg: "close error"});
+            // }
         }
     });
 
