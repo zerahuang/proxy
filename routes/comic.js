@@ -241,151 +241,131 @@ exports.queryComic = function (req, res, next) {
 	}
 	var pageindex = req.query.pageindex || 0;
 	// 有登录就去查询吧，最后要能返回一个数组
-	comicusersDao.queryById(function (err, data) {
-		if (err || (data && data.length == 0)) {
+	userDao.queryById(function (err0, data0) {
+		if (err0 || (data0 && data0.length == 0)) {
 			// 返回异常
 			res.jsonp({ret: 3, msg: "err1", data: []});
-			return false;
-		}
-
-		// 没有异常就直接返回内容
-		// 开始做查询
-		if (data[0].infos) {
-			// 存在
-			try {
-				var infos = JSON.parse(data[0].infos);
-				// 以最新的排序
-				var _temp = [], searchArr = [];
-				for (var i in infos) {
-					// 如果type=collect的话，就是查看收藏过的
-					if (req.query.type == "collect") {
-						if (infos[i].collect) {
-							_temp.push({
-								time: infos[i].time,
-								name: i
-							});
-						}
-					} else {
-						// 必须要 不是 不在列表里面的
-						if (!infos[i].nl) {
-							_temp.push({
-								time: infos[i].time,
-								name: i
-							});
-						}
-					}
+		} else {
+			comicusersDao.queryById(function (err, data) {
+				if (err || (data && data.length == 0)) {
+					// 返回异常
+					res.jsonp({ret: 3, msg: "err1", data: []});
+					return false;
 				}
 
-				_temp.sort(function (a,b) {
-					if (new Date(a.time) < new Date(b.time)) {
-						return 1;
-					} else if (new Date(a.time) > new Date(b.time)) {
-						return -1;
-					} else {
-						return 0;
+				// 没有异常就直接返回内容
+				// 开始做查询
+				// if (data[0].infos) {
+					// 存在
+					try {
+						var infos = JSON.parse(data[0].infos);
+					} catch(e) {
+						// res.jsonp({ret: 5, msg: "parse error", data: []});
+						var infos = {};
 					}
-				});
+						// 以最新的排序
+						var _temp = [], searchArr = [];
+						for (var i in infos) {
+							// 如果type=collect的话，就是查看收藏过的
+							if (req.query.type == "collect") {
+								if (infos[i].collect) {
+									_temp.push({
+										time: infos[i].time,
+										name: i
+									});
+								}
+							} else {
+								// 必须要 不是 不在列表里面的
+								if (!infos[i].nl) {
+									_temp.push({
+										time: infos[i].time,
+										name: i
+									});
+								}
+							}
+						}
 
-				_temp.forEach(function (ceil) {
-					searchArr.push(ceil.name);
-				});
-
-				// 再来个选择吧
-				if (req.query.type != "collect") {
-					// 自己的就是全部 , 否则要分页
-					searchArr = searchArr.slice(pageindex * 10,(+pageindex + 1) * 10);
-				}
-
-				// 查询全部的漫画信息
-				comicsDao.queryList(function (err2, data2) {
-					if (err2) {
-						res.jsonp({ret: 6, msg: "query comic error", data: [], havepaied: !!data[0].payinfo, viptime: data[0].viptime && +data[0].viptime > new Date().getTime() ? $formatDate(new Date(+data[0].viptime), "YYYY-MM-DD HH:II:SS") : ""});
-					} else {
-						// var _ret = [];
-						// for (var i in infos) {
-						// 	// 如果type=collect的话，就是查看收藏过的
-						// 	if (req.query.type == "collect") {
-						// 		if (infos[i].collect) {
-						// 			var _tt = data2.data.filter(function (ceil) {return ceil.name == i})[0];
-						// 			if (_tt) {
-						// 				_ret.push({
-						// 					name: i,
-						// 					z_name: _tt.z_ch_name,
-						// 					z_ch_name: _tt.z_ch_name,
-						// 					current: infos[i].current,
-						// 					cover: _tt.indexpic,
-						// 					time: infos[i].time,
-						// 					author: _tt.author,
-						// 					charactors: _tt.charactors,
-						// 					indexpic: _tt.indexpic,
-						// 					charslen: _tt.charactor_counts
-						// 				});
-						// 			}
-						// 		}
-						// 	} else {
-						// 		var _tt = data2.data.filter(function (ceil) {return ceil.name == i})[0];
-						// 		if (_tt) {
-						// 			_ret.push({
-						// 				name: i,
-						// 				z_name: _tt.z_ch_name,
-						// 				z_ch_name: _tt.z_ch_name,
-						// 				current: infos[i].current,
-						// 				cover: _tt.indexpic,
-						// 				time: infos[i].time,
-						// 				author: _tt.author,
-						// 				charactors: _tt.charactors,
-						// 				indexpic: _tt.indexpic
-						// 			});
-						// 		}
-						// 	}
-						// }
-
-						var _ret = [];
-						data2.data.forEach(function (ceil) {
-							_ret.push({
-								name: ceil.name,
-								z_name: ceil.z_ch_name,
-								z_ch_name: ceil.z_ch_name,
-								current: infos[ceil.name].current,
-								cover: ceil.indexpic,
-								time: infos[ceil.name].time,
-								author: ceil.author,
-								charactors: ceil.charactors,
-								indexpic: ceil.indexpic,
-								charslen: ceil.charactor_counts
-							});
-						});
-
-						// console.log(_ret);
-
-						// 根据阅读时间排序
-						_ret.sort(function (a,b) {
-							if (new Date(infos[a.name].time) < new Date(infos[b.name].time)) {
+						_temp.sort(function (a,b) {
+							if (new Date(a.time) < new Date(b.time)) {
 								return 1;
-							} else if (new Date(infos[a.name].time) > new Date(infos[b.name].time)) {
+							} else if (new Date(a.time) > new Date(b.time)) {
 								return -1;
 							} else {
 								return 0;
 							}
 						});
-						
-						// 返回数据
-						// res.jsonp({ret: 0, msg: "", data: _ret.slice(pageindex * 10,(+pageindex + 1) * 10)});
-						res.jsonp({ret: 0, msg: "", data: _ret, havepaied: !!data[0].payinfo, viptime: data[0].viptime && +data[0].viptime > new Date().getTime() ? $formatDate(new Date(+data[0].viptime), "YYYY-MM-DD HH:II:SS") : ""});
-					}
-				}, {
-					name: {
-		                type: "in",
-		                value: searchArr
-		            }
-				}, {
-					pagesize: 10000
-				});
-			} catch(e) {
-				res.jsonp({ret: 5, msg: "parse error", data: []});
-			}
-		} else {
-			res.jsonp({ret: 4, msg: "err2", data: []});
+
+						_temp.forEach(function (ceil) {
+							searchArr.push(ceil.name);
+						});
+
+						// 再来个选择吧
+						if (req.query.type != "collect") {
+							// 自己的就是全部 , 否则要分页
+							searchArr = searchArr.slice(pageindex * 10,(+pageindex + 1) * 10);
+						}
+
+						// 查询全部的漫画信息
+						comicsDao.queryList(function (err2, data2) {
+							if (err2) {
+								res.jsonp({ret: 6, msg: "query comic error", data: [], 
+									unionid: data0[0].unionid,
+									readcount: data[0].readcount,
+									havepaied: !!data[0].payinfo, 
+									viptime: data[0].viptime && +data[0].viptime > new Date().getTime() ? $formatDate(new Date(+data[0].viptime), "YYYY-MM-DD HH:II:SS") : ""
+								});
+							} else {
+								var _ret = [];
+								data2.data.forEach(function (ceil) {
+									_ret.push({
+										name: ceil.name,
+										z_name: ceil.z_ch_name,
+										z_ch_name: ceil.z_ch_name,
+										current: infos[ceil.name].current,
+										cover: ceil.indexpic,
+										time: infos[ceil.name].time,
+										author: ceil.author,
+										charactors: ceil.charactors,
+										indexpic: ceil.indexpic,
+										charslen: ceil.charactor_counts
+									});
+								});
+
+								// console.log(_ret);
+
+								// 根据阅读时间排序
+								_ret.sort(function (a,b) {
+									if (new Date(infos[a.name].time) < new Date(infos[b.name].time)) {
+										return 1;
+									} else if (new Date(infos[a.name].time) > new Date(infos[b.name].time)) {
+										return -1;
+									} else {
+										return 0;
+									}
+								});
+								
+								// 返回数据
+								// res.jsonp({ret: 0, msg: "", data: _ret.slice(pageindex * 10,(+pageindex + 1) * 10)});
+								res.jsonp({ret: 0, msg: "", data: _ret.slice(0,30), 
+									unionid: data0[0].unionid,
+									readcount: data[0].readcount,
+									havepaied: !!data[0].payinfo, 
+									viptime: data[0].viptime && +data[0].viptime > new Date().getTime() ? $formatDate(new Date(+data[0].viptime), "YYYY-MM-DD HH:II:SS") : ""
+								});
+							}
+						}, {
+							name: {
+				                type: "in",
+				                value: searchArr
+				            }
+						}, {
+							pagesize: 10000
+						});
+					
+				// } else {
+				// 	res.jsonp({ret: 4, msg: "err2", data: []});
+				// }
+			}, userid);
 		}
 	}, userid);
 }
@@ -525,8 +505,8 @@ exports.query = function (req, res, next) {
 						    sum: true
 						});
 			    	}
-
-			    	if (apperr || (appdata && appdata.length == 0) || !(appdata[0].bannerad1 && appdata[0].bannerad2)) {
+			    	//  || !(appdata[0].bannerad1 && appdata[0].bannerad2)
+			    	if (apperr || (appdata && appdata.length == 0)) {
 						doinfos();
 					} else {
 						if (data3[0].isfree == 1 || (data.infos[req.query.comic].vip || +data.viptime > new Date())) {
@@ -1907,7 +1887,7 @@ exports.buildComic4 = function (req, res, next) {
     	try {
 	        data = data.replace(/[\r\n\t]/g,"");
 	        // console.log(data.match(/chapter-list-1(?:(?!<\/ul>).)+<\/ul>/)[0]);
-	        var temChars = data.match(/<li><a href="\/manhua\/(?:(?!\.html).)+\.html[^>]+/g);;
+	        var temChars = data.match(/<li><a href="\/manhua\/(?:(?!\.html).)+\.html[^>]+/g);
 	        var charactors = [];
 	        temChars.forEach(function (ceil) {
 	            charactors.push({
@@ -4406,8 +4386,8 @@ exports.buildComic10 = function (req, res, next) {
 	                });
 	            });
 	            // 数据fromlen ? funcs.slice(fromlen) : funcs
-	            // async.parallelLimit(fromlen ? funcs.slice(fromlen) : funcs, 3, function(err, data) {
-	            async.parallelLimit(funcs.slice(0,1), 3, function(err, data) {
+	            async.parallelLimit(fromlen ? funcs.slice(fromlen) : funcs, 3, function(err, data) {
+	            // async.parallelLimit(funcs.slice(0,1), 3, function(err, data) {
 	                // res.jsonp("", JSON.stringify(data));
 		            console.log(JSON.stringify(data));
 	            });
@@ -4431,7 +4411,7 @@ exports.buildComic10 = function (req, res, next) {
                 // 获得urls
                 eval("eval(function(p,a,c,k,e,d)" + data.match(/eval\(function\(p,a,c,k,e,d\)((?:(?!\.split\('\|'\),0,\{\}\)\)).)+)\.split\('\|'\),0,\{\}\)\)/)[1] + ".split('|'),0,{}))");
                 // var chapterPath = data.match(/var chapterPath = "([^"]*)"/)[1];
-                var urls = Array.from(cInfo.fs, function (ceil) {return /^http/.test(ceil) ? ceil : ("http://images.720rs.com" + ceil);});
+                var urls = Array.from(cInfo.fs, function (ceil) {return /^http/.test(ceil) ? ceil : ("http://imagesold.benzidui.com/" + ceil);});
                 doByUrls(urls);
                 // 获得urls之后要做的事情
                 // doByUrls(urls);
@@ -5268,6 +5248,843 @@ exports.buildComic12 = function (req, res, next) {
     }
 }
 
+// request 统一加上重试一次
+// var _oriRequest = request;
+function requestTry (url, callit, times) {
+	var _hasBack = false;
+	var _tt = setTimeout(function () {
+		// 重试吧
+		if (!times) {
+			console.log("链接：" + url + " 请求超时，准备重试第一次");
+			// _doback = function () {};
+			_hasBack = true;
+			// 可以重试
+			requestTry (url, callit, 1);
+		} else if (times == 1) {
+			console.log("链接：" + url + " 请求超时，准备重试第二次");
+			// _doback = function () {};
+			_hasBack = true;
+			// 可以重试
+			requestTry (url, callit, 2);
+		} else {
+			console.log("链接：" + url + " 再次超时，不再重试了");
+			// 不支持重试了.
+			_doback();
+		}
+	}, 20000);
+
+	var _doback = function (e, d) {
+		if (_tt) {
+			clearTimeout(_tt);
+		}
+		if (_hasBack) return false;
+		_hasBack = true;
+		// _doback = function () {};
+		callit(e, d);
+	};
+
+	request(url, _doback);
+}
+
+// 构建漫漫台 mt--heitong
+exports.buildComic13 = function (req, res, next) {
+	// heitong
+	if (!req.query.comicid) {
+		res.jsonp({ret: 1, err: "param err"});
+		return false;
+	}
+
+    // https://www.yiyimanhua.com/manhua/shijie2/
+    var link = "https://www.manmantai.com/manhua/" + req.query.comicid + "/";
+
+	requestTry(link, function (err, data) {
+    	try {
+	        data = data.body.replace(/[\r\n\t]/g,"");
+	        
+	        // 找到ullist
+	        var listchar = data.match(/<li>\s*<a href="\/manhua(?:(?!<\/li>).)+<\/li>/g);
+	        var charactors = [];
+        	listchar.forEach(function (ceil) {
+        		charactors.push({
+	                url: "https://www.manmantai.com" + ceil.match(/<a href="(\/[^"]+)"/)[1],
+	                // name: ceil.match(/>([^>]+)<i>/)[1]
+	                name: ceil.match(/<span>((?:(?!<\/span>).)+)<\/span>/)[1].trim()
+	            });
+        	});
+	     	charactors.reverse();
+
+	        // 获得中文名
+	        var zname = data.match(/<img class="pic"(?:(?!alt).)+alt="([^"]+)"/)[1];
+
+	        // 获得其他信息
+	        var comicinfo = {
+	        	name: "mt--" + req.query.comicid,
+	        	z_ch_name: zname.replace(/漫画$/, ""),
+	        	charactor_counts: charactors.length,
+	        	share_reward: 10,
+	        	ad_reward: charactors.length < 100 ? 1 : (charactors.length >= 100 && charactors.length < 300) ? 2 : 3,
+	        	freechars: charactors.length < 10 ? 3 : (charactors.length >= 10 && charactors.length < 100) ? Math.floor(charactors.length / 3) : (charactors.length >= 100 && charactors.length < 600) ? Math.floor(charactors.length / 4) : 150,
+	        	listwidth: "350",
+	        	isover: /strong>漫画状态：<\/strong>\s*<a href="\/list\/lianzai\/">/.test(data) ? 0 : 1
+	        };
+
+	        // 获得作者信息
+	        // var author = data.match(/原著作者：<\/em>([^<]*)<\/p>/);
+	        var author = data.match(/漫画作者：<\/strong><a href="\/author[^"]+">([^<]+)</);
+	        if (author) {
+	        	comicinfo.author = author[1].trim();
+	        }
+	        // 获得类目信息
+	        var tags = data.match(/漫画剧情：<\/strong>(?:(?!<\/span>).)+<\/span>/);
+	        if (tags) {
+	        	// 存在
+	        	tags = tags[0].match(/<a(?:(?!<\/a>).)+<\/a>/g);
+	        	if (tags) {
+	        		var _t_tag = [];
+	        		tags.forEach(function (ceil) {
+	        			_t_tag.push(ceil.replace(/^[^>]+>|<\/a>/g, ''));
+	        		});
+	        		tags = _t_tag;
+	        	}
+	        }
+	        comicinfo.tags = tags ? tags.join(",") : "";
+	        // var tags = data.match(/class="comic_tags">([^<]+)</g);
+	        // if (tags) {
+	        // 	comicinfo.tags = tags[1].trim();
+	        // }
+	        if (tags) {
+	        	var characs = "";
+	        	tags.forEach(function (ceil) {
+	        		switch (ceil) {
+						case "少女爱情": characs += "恋爱,"; break;
+						case "爱情": characs += "恋爱,"; break;
+						case "少女爱情": characs += "恋爱,"; break;
+						case "科幻": characs += "奇幻,冒险,科幻,"; break;
+						case "魔法": characs += "玄幻,魔法,"; break;
+						case "神鬼": characs += "猎奇,神鬼,"; break;
+						case "格斗": characs += "格斗,武侠,"; break;
+						case "机战": characs += "奇幻,冒险,机战,"; break;
+						case "历史": characs += "古风,"; break;
+						case "伪娘": characs += "彩虹,"; break;
+						case "恐怖": characs += "猎奇,"; break;
+						case "耽美": characs += "彩虹,"; break;
+		        		default: characs += ceil + ",";
+		        	}
+	        	});
+	        	// 去重
+	        	comicinfo.charactors = [];
+	        	characs.replace(/,$/, "").split(",").forEach(function (ceil) {
+	        		if (comicinfo.charactors.indexOf(ceil) == -1) {
+	        			comicinfo.charactors.push(ceil);
+	        		}
+	        	});
+	        	comicinfo.charactors = comicinfo.charactors.slice(0,5).join(",");
+	        } else {
+	        	comicinfo.charactors = "日常";
+	        }
+	       	// 描述
+	       	// var descs = data.match(/介：<\/em>((?:(?!<a).)+)<a/);
+	       	var descs = data.match(/<div id="intro-all"(?:(?!;">).)+;">((?:(?!<\/p>).)+)<\/p>/);
+	       	if (descs) {
+	       		comicinfo.descs = descs[1].trim();
+	       	} else {
+	       		comicinfo.descs = "";
+	       	}
+
+	       	// 主图
+	       	var indexpic = data.match(/<img class="pic" src="([^"]+)"/);
+	       	if (indexpic) {
+	       		comicinfo.indexpic = indexpic[1];
+	       	}
+	     	comicsDao.queryById(function (err3, data3) {
+	       		if (data3 && data3.length != 0) {
+	       			// 有数据，有一些是不更新的
+	       			// 要插入的数据
+		       		var _toinsert = {
+				        name: comicinfo.name,
+				        charactor_counts: comicinfo.charactor_counts,
+				        charactors: comicinfo.charactors,
+				        updatetime: new Date(),
+				        freechars: comicinfo.freechars,
+				        // comments: _b.length ? JSON.stringify(_b) : "",
+				        isover: comicinfo.isover
+				    };
+	       		} else {
+	       			// 要插入的数据
+		       		var _toinsert = {
+				        name: comicinfo.name,
+				        z_ch_name: comicinfo.z_ch_name,
+				        author: comicinfo.author,
+				        charactor_counts: comicinfo.charactor_counts,
+				        tags: comicinfo.tags,
+				        charactors: comicinfo.charactors,
+				        descs: comicinfo.descs,
+				        more: "",
+				        indexpic: comicinfo.indexpic,
+				        share_reward: comicinfo.share_reward,
+				        ad_reward: comicinfo.ad_reward,
+				        freechars: comicinfo.freechars,
+				        listwidth: comicinfo.listwidth,
+				        createtime: new Date(),
+				        updatetime: new Date(),
+				        // comments: _b.length ? JSON.stringify(_b) : "",
+				        isover: comicinfo.isover
+				    };
+	       		}
+
+   				// 先把漫画插入到表中
+		        comicsDao.add(function (err1, data1) {
+			        if (err1) {
+			        	console.log(err1);
+			            // 写入db报错
+			            res.jsonp({
+			            	ret: 4,
+			            	msg: "写入db报错"
+			            });
+			        } else {
+			        	// callback("", "写入db成功");
+			        	// console.log(data1);
+			        	// 还要写入章节表
+			        	// console.log(data1.insertId);
+			        	
+			        	// setTimeout(function () {
+			        		render(data1.insertId, req.query.type == 1 ? 0 : (data3 && data3[0] && data3[0].charactor_counts));
+			        	// }, 100);
+
+			        	res.jsonp({
+			            	ret: 0,
+			            	msg: "正在构建中"
+			            });
+			        }
+			    }, _toinsert , {
+			        key: "name"
+			    });
+	       	}, comicinfo.name);
+
+	        function render (comicid, fromlen) {
+	        	console.log(comicid, fromlen);
+	            var funcs = [];
+	            // console.log(comicid, charactors);
+	            charactors.forEach(function (ceil, index) {
+	                funcs.push(function (innerCall) {
+	                    getPage({
+	                        url: ceil.url,
+	                        name: ceil.name.replace(/\?/g, "").replace(/\:/g, "_"),
+	                        index: index,
+	                        comicid: comicid,
+	                        comicname: comicinfo.name
+	                    }, function (err, data) {
+	                        innerCall("", data);
+	                    });
+	                });
+	            });
+	            // 数据fromlen ? funcs.slice(fromlen) : funcs
+	            async.parallelLimit(fromlen ? funcs.slice(fromlen) : funcs, 3, function(err, data) {
+	            // async.parallelLimit(funcs.slice(0,1), 3, function(err, data) {
+	                // res.jsonp("", JSON.stringify(data));
+		            console.log(JSON.stringify(data));
+	            });
+	        }
+
+        } catch (e) {
+        	console.log(e);
+            // 页面内部解析出错
+            res.jsonp({
+            	ret: 4,
+            	msg: "获得数据报错"
+            });
+        }
+    });
+
+    function getPage (obj, pagecallback, trytime) {
+    	// console.log(obj);
+        requestTry(obj.url, function (err, data) {
+            try {
+                data = data.body.replace(/[\r\n\t]/g,"");
+                // 获得urls
+                var chapterPath = data.match(/var chapterPath = "([^"]*)"/)[1];
+                var chapterImages = JSON.parse(data.match(/var chapterImages = (\[[^\]]*\])/)[1]);
+
+                var urls = Array.from(chapterImages, function (ceil) {return /^http/.test(ceil) ? ceil : ("https://img001.36man.cc/" + chapterPath + ceil);});
+                // console.log(urls);
+                // doByUrls(urls);
+                // 获得urls之后要做的事情
+                doByUrls(urls);
+                function doByUrls (urls) {
+                	charactorsDao.add(function (err2, data2) {
+                   		if (err2) {
+                   			console.log(err2);
+                   		}
+                   		// console.log("AAAAA", obj + " " + (err2 ? JSON.stringify(err2) : ""));
+                   		console.log("number" + (obj.index + 1) + ". " + obj.name + " exec " + (err2 ? "failed" : "success"));
+			            
+			            // 要写入成功之后，才结束
+			            pagecallback("", err2 ? {
+		                    url: obj.url,
+		                    reason: err2.toString()
+		                } : "");
+			        }, {
+			            name: obj.name,
+			            comic_index: obj.index + 1,
+			            pic_count: urls.length,
+			            comic_name: obj.comicname,
+			            route: obj.comicname + "/" + (obj.index + 1),
+			            read_count: 0,
+			            comic_id: 0,
+			            urls: JSON.stringify(urls)
+			        }, {
+			            key: "route",
+			            tablename: "charactors_" + ("0" + (obj.comicid % 100)).slice(-2)
+			        });
+                }
+            } catch(e) {
+            	// 执行失败之后，再次重试一遍吧
+            	if (!trytime) {
+            		getPage (obj, pagecallback, 1);
+            	} else {
+            		// 页面内部解析出错
+	                pagecallback("", {
+	                    url: obj.url,
+	                    reason: e.toString()
+	                });
+            	}
+            }
+        });
+    }
+}
+
+// 构建蒂亚漫画 dy--liangbuyi
+exports.buildComic14 = function (req, res, next) {
+	// liangbuyi
+	if (!req.query.comicid) {
+		res.jsonp({ret: 1, err: "param err"});
+		return false;
+	}
+
+    // https://www.diya1.com/manhua/liangbuyi/
+    var link = "https://www.diya1.com/manhua/" + req.query.comicid + "/";
+
+	requestTry(link, function (err, data) {
+    	try {
+	        data = data.body.replace(/[\r\n\t]/g,"");
+	        
+	        // 找到ullist
+	        var listchar = data.match(/<li>\s*<a href="\/manhua(?:(?!<\/li>).)+<\/li>/g);
+	        var charactors = [];
+        	listchar.forEach(function (ceil) {
+        		charactors.push({
+	                url: "https://www.diya1.com" + ceil.match(/<a href="(\/[^"]+)"/)[1],
+	                // name: ceil.match(/>([^>]+)<i>/)[1]
+	                name: ceil.match(/<span>((?:(?!<\/span>).)+)<\/span>/)[1].trim()
+	            });
+        	});
+	     	// charactors.reverse();
+	        // 获得中文名
+	        var zname = data.match(/<img class="pic"(?:(?!alt).)+alt="([^"]+)"/)[1];
+
+	        // 获得其他信息
+	        var comicinfo = {
+	        	name: "dy--" + req.query.comicid,
+	        	z_ch_name: zname.replace(/漫画$/, ""),
+	        	charactor_counts: charactors.length,
+	        	share_reward: 10,
+	        	ad_reward: charactors.length < 100 ? 1 : (charactors.length >= 100 && charactors.length < 300) ? 2 : 3,
+	        	freechars: charactors.length < 10 ? 3 : (charactors.length >= 10 && charactors.length < 100) ? Math.floor(charactors.length / 3) : (charactors.length >= 100 && charactors.length < 600) ? Math.floor(charactors.length / 4) : 150,
+	        	listwidth: "350",
+	        	isover: /strong>漫画状态：<\/strong>\s*<a href="\/list\/lianzai\/">/.test(data) ? 0 : 1
+	        };
+
+	        // 获得作者信息
+	        // var author = data.match(/原著作者：<\/em>([^<]*)<\/p>/);
+	        var author = data.match(/漫画作者：<\/strong><a href="\/author[^"]+">([^<]+)</);
+	        if (author) {
+	        	comicinfo.author = author[1].trim();
+	        }
+	        // 获得类目信息
+	        var tags = data.match(/漫画类型：<\/strong>(?:(?!<\/span>).)+<\/span>/);
+	        if (tags) {
+	        	// 存在
+	        	tags = tags[0].match(/<a(?:(?!<\/a>).)+<\/a>/g);
+	        	if (tags) {
+	        		var _t_tag = [];
+	        		tags.forEach(function (ceil) {
+	        			_t_tag.push(ceil.replace(/^[^>]+>|<\/a>/g, ''));
+	        		});
+	        		tags = _t_tag;
+	        	}
+	        }
+	        comicinfo.tags = tags ? tags.join(",") : "";
+	        // var tags = data.match(/class="comic_tags">([^<]+)</g);
+	        // if (tags) {
+	        // 	comicinfo.tags = tags[1].trim();
+	        // }
+	        if (tags) {
+	        	var characs = "";
+	        	tags.forEach(function (ceil) {
+	        		switch (ceil) {
+						case "少女爱情": characs += "恋爱,"; break;
+						case "爱情": characs += "恋爱,"; break;
+						case "少女爱情": characs += "恋爱,"; break;
+						case "科幻": characs += "奇幻,冒险,科幻,"; break;
+						case "魔法": characs += "玄幻,魔法,"; break;
+						case "神鬼": characs += "猎奇,神鬼,"; break;
+						case "格斗": characs += "格斗,武侠,"; break;
+						case "机战": characs += "奇幻,冒险,机战,"; break;
+						case "历史": characs += "古风,"; break;
+						case "伪娘": characs += "彩虹,"; break;
+						case "恐怖": characs += "猎奇,"; break;
+						case "耽美": characs += "彩虹,"; break;
+		        		default: characs += ceil + ",";
+		        	}
+	        	});
+	        	// 去重
+	        	comicinfo.charactors = [];
+	        	characs.replace(/,$/, "").split(",").forEach(function (ceil) {
+	        		if (comicinfo.charactors.indexOf(ceil) == -1) {
+	        			comicinfo.charactors.push(ceil);
+	        		}
+	        	});
+	        	comicinfo.charactors = comicinfo.charactors.slice(0,5).join(",");
+	        } else {
+	        	comicinfo.charactors = "日常";
+	        }
+	       	// 描述
+	       	// var descs = data.match(/介：<\/em>((?:(?!<a).)+)<a/);
+	       	var descs = data.match(/<div id="intro-all"(?:(?!;">).)+;">((?:(?!<\/p>).)+)<\/p>/);
+	       	if (descs) {
+	       		comicinfo.descs = descs[1].trim();
+	       	} else {
+	       		comicinfo.descs = "";
+	       	}
+
+	       	// 主图
+	       	var indexpic = data.match(/<img class="pic" src="([^"]+)"/);
+	       	if (indexpic) {
+	       		comicinfo.indexpic = indexpic[1];
+	       	}
+	     	comicsDao.queryById(function (err3, data3) {
+	       		if (data3 && data3.length != 0) {
+	       			// 有数据，有一些是不更新的
+	       			// 要插入的数据
+		       		var _toinsert = {
+				        name: comicinfo.name,
+				        charactor_counts: comicinfo.charactor_counts,
+				        charactors: comicinfo.charactors,
+				        updatetime: new Date(),
+				        freechars: comicinfo.freechars,
+				        // comments: _b.length ? JSON.stringify(_b) : "",
+				        isover: comicinfo.isover
+				    };
+	       		} else {
+	       			// 要插入的数据
+		       		var _toinsert = {
+				        name: comicinfo.name,
+				        z_ch_name: comicinfo.z_ch_name,
+				        author: comicinfo.author,
+				        charactor_counts: comicinfo.charactor_counts,
+				        tags: comicinfo.tags,
+				        charactors: comicinfo.charactors,
+				        descs: comicinfo.descs,
+				        more: "",
+				        indexpic: comicinfo.indexpic,
+				        share_reward: comicinfo.share_reward,
+				        ad_reward: comicinfo.ad_reward,
+				        freechars: comicinfo.freechars,
+				        listwidth: comicinfo.listwidth,
+				        createtime: new Date(),
+				        updatetime: new Date(),
+				        // comments: _b.length ? JSON.stringify(_b) : "",
+				        isover: comicinfo.isover
+				    };
+	       		}
+
+   				// 先把漫画插入到表中
+		        comicsDao.add(function (err1, data1) {
+			        if (err1) {
+			        	console.log(err1);
+			            // 写入db报错
+			            res.jsonp({
+			            	ret: 4,
+			            	msg: "写入db报错"
+			            });
+			        } else {
+			        	// callback("", "写入db成功");
+			        	// console.log(data1);
+			        	// 还要写入章节表
+			        	// console.log(data1.insertId);
+			        	
+			        	// setTimeout(function () {
+			        		render(data1.insertId, req.query.type == 1 ? 0 : (data3 && data3[0] && data3[0].charactor_counts));
+			        	// }, 100);
+
+			        	res.jsonp({
+			            	ret: 0,
+			            	msg: "正在构建中"
+			            });
+			        }
+			    }, _toinsert , {
+			        key: "name"
+			    });
+	       	}, comicinfo.name);
+
+	        function render (comicid, fromlen) {
+	        	console.log(comicid, fromlen);
+	            var funcs = [];
+	            // console.log(comicid, charactors);
+	            charactors.forEach(function (ceil, index) {
+	                funcs.push(function (innerCall) {
+	                    getPage({
+	                        url: ceil.url,
+	                        name: ceil.name.replace(/\?/g, "").replace(/\:/g, "_"),
+	                        index: index,
+	                        comicid: comicid,
+	                        comicname: comicinfo.name
+	                    }, function (err, data) {
+	                        innerCall("", data);
+	                    });
+	                });
+	            });
+	            // 数据fromlen ? funcs.slice(fromlen) : funcs
+	            async.parallelLimit(fromlen ? funcs.slice(fromlen) : funcs, 3, function(err, data) {
+	            // async.parallelLimit(funcs.slice(0,1), 3, function(err, data) {
+	                // res.jsonp("", JSON.stringify(data));
+		            console.log(JSON.stringify(data));
+	            });
+	        }
+
+        } catch (e) {
+        	console.log(e);
+            // 页面内部解析出错
+            res.jsonp({
+            	ret: 4,
+            	msg: "获得数据报错"
+            });
+        }
+    });
+
+    function getPage (obj, pagecallback, trytime) {
+    	// console.log(obj);
+        requestTry(obj.url, function (err, data) {
+            try {
+                data = data.body.replace(/[\r\n\t]/g,"");
+                // 获得urls
+                var chapterPath = data.match(/var chapterPath = "([^"]*)"/)[1];
+                var chapterImages = JSON.parse(data.match(/var chapterImages = (\[[^\]]*\])/)[1]);
+
+                var urls = Array.from(chapterImages, function (ceil) {return /^http/.test(ceil) ? ceil : ("https://img.diya1.com/" + chapterPath + ceil);});
+                // doByUrls(urls);
+                // 获得urls之后要做的事情
+                doByUrls(urls);
+                function doByUrls (urls) {
+                	charactorsDao.add(function (err2, data2) {
+                   		if (err2) {
+                   			console.log(err2);
+                   		}
+                   		// console.log("AAAAA", obj + " " + (err2 ? JSON.stringify(err2) : ""));
+                   		console.log("number" + (obj.index + 1) + ". " + obj.name + " exec " + (err2 ? "failed" : "success"));
+			            
+			            // 要写入成功之后，才结束
+			            pagecallback("", err2 ? {
+		                    url: obj.url,
+		                    reason: err2.toString()
+		                } : "");
+			        }, {
+			            name: obj.name,
+			            comic_index: obj.index + 1,
+			            pic_count: urls.length,
+			            comic_name: obj.comicname,
+			            route: obj.comicname + "/" + (obj.index + 1),
+			            read_count: 0,
+			            comic_id: 0,
+			            urls: JSON.stringify(urls)
+			        }, {
+			            key: "route",
+			            tablename: "charactors_" + ("0" + (obj.comicid % 100)).slice(-2)
+			        });
+                }
+            } catch(e) {
+            	// 执行失败之后，再次重试一遍吧
+            	if (!trytime) {
+            		getPage (obj, pagecallback, 1);
+            	} else {
+            		// 页面内部解析出错
+	                pagecallback("", {
+	                    url: obj.url,
+	                    reason: e.toString()
+	                });
+            	}
+            }
+        });
+    }
+}
+
+// 构建古风漫画 gf--huangdaohuanshenyouxi
+exports.buildComic15 = function (req, res, next) {
+	// huangdaohuanshenyouxi
+	if (!req.query.comicid) {
+		res.jsonp({ret: 1, err: "param err"});
+		return false;
+	}
+
+    // https://www.gufengmh8.com/manhua/huangdaohuanshenyouxi/
+    var link = "https://www.gufengmh8.com/manhua/" + req.query.comicid + "/";
+
+	requestTry(link, function (err, data) {
+    	try {
+	        data = data.body.replace(/[\r\n\t]/g,"");
+	        
+	        // 找到ullist
+	        var listchar = data.match(/<li>\s*<a href="\/manhua(?:(?!<\/li>).)+<\/li>/g);
+	        var charactors = [];
+        	listchar.forEach(function (ceil) {
+        		charactors.push({
+	                url: "https://www.gufengmh8.com" + ceil.match(/<a href="(\/[^"]+)"/)[1],
+	                // name: ceil.match(/>([^>]+)<i>/)[1]
+	                name: ceil.match(/<span>((?:(?!<\/span>).)+)<\/span>/)[1].trim()
+	            });
+        	});
+	     	// charactors.reverse();
+	     	// console.log(charactors);
+
+	        // 获得中文名
+	        var zname = data.match(/<img class="pic"(?:(?!alt).)+alt="([^"]+)"/)[1];
+
+	        // 获得其他信息
+	        var comicinfo = {
+	        	name: "gf--" + req.query.comicid,
+	        	z_ch_name: zname.replace(/漫画$/, ""),
+	        	charactor_counts: charactors.length,
+	        	share_reward: 10,
+	        	ad_reward: charactors.length < 100 ? 1 : (charactors.length >= 100 && charactors.length < 300) ? 2 : 3,
+	        	freechars: charactors.length < 10 ? 3 : (charactors.length >= 10 && charactors.length < 100) ? Math.floor(charactors.length / 3) : (charactors.length >= 100 && charactors.length < 600) ? Math.floor(charactors.length / 4) : 150,
+	        	listwidth: "350",
+	        	isover: /strong>漫画状态：<\/strong>\s*<a href="\/list\/lianzai\/">/.test(data) ? 0 : 1
+	        };
+
+	        // 获得作者信息
+	        // var author = data.match(/原著作者：<\/em>([^<]*)<\/p>/);
+	        var author = data.match(/漫画作者：<\/strong><a href="\/author[^"]+">([^<]+)</);
+	        if (author) {
+	        	comicinfo.author = author[1].trim();
+	        }
+	        // 获得类目信息
+	        var tags = data.match(/漫画类型：<\/strong>(?:(?!<\/span>).)+<\/span>/);
+	        if (tags) {
+	        	// 存在
+	        	tags = tags[0].match(/<a(?:(?!<\/a>).)+<\/a>/g);
+	        	if (tags) {
+	        		var _t_tag = [];
+	        		tags.forEach(function (ceil) {
+	        			_t_tag.push(ceil.replace(/^[^>]+>|<\/a>/g, ''));
+	        		});
+	        		tags = _t_tag;
+	        	}
+	        }
+	        comicinfo.tags = tags ? tags.join(",") : "";
+	        // var tags = data.match(/class="comic_tags">([^<]+)</g);
+	        // if (tags) {
+	        // 	comicinfo.tags = tags[1].trim();
+	        // }
+	        if (tags) {
+	        	var characs = "";
+	        	tags.forEach(function (ceil) {
+	        		switch (ceil) {
+						case "少女爱情": characs += "恋爱,"; break;
+						case "爱情": characs += "恋爱,"; break;
+						case "少女爱情": characs += "恋爱,"; break;
+						case "科幻": characs += "奇幻,冒险,科幻,"; break;
+						case "魔法": characs += "玄幻,魔法,"; break;
+						case "神鬼": characs += "猎奇,神鬼,"; break;
+						case "格斗": characs += "格斗,武侠,"; break;
+						case "机战": characs += "奇幻,冒险,机战,"; break;
+						case "历史": characs += "古风,"; break;
+						case "伪娘": characs += "彩虹,"; break;
+						case "恐怖": characs += "猎奇,"; break;
+						case "耽美": characs += "彩虹,"; break;
+		        		default: characs += ceil + ",";
+		        	}
+	        	});
+	        	// 去重
+	        	comicinfo.charactors = [];
+	        	characs.replace(/,$/, "").split(",").forEach(function (ceil) {
+	        		if (comicinfo.charactors.indexOf(ceil) == -1) {
+	        			comicinfo.charactors.push(ceil);
+	        		}
+	        	});
+	        	comicinfo.charactors = comicinfo.charactors.slice(0,5).join(",");
+	        } else {
+	        	comicinfo.charactors = "日常";
+	        }
+	       	// 描述
+	       	// var descs = data.match(/介：<\/em>((?:(?!<a).)+)<a/);
+	       	var descs = data.match(/<div id="intro-all"(?:(?!;">).)+;">((?:(?!<\/p>).)+)<\/p>/);
+	       	if (descs) {
+	       		comicinfo.descs = descs[1].trim();
+	       	} else {
+	       		comicinfo.descs = "";
+	       	}
+
+	       	// 主图
+	       	var indexpic = data.match(/<img class="pic" src="([^"]+)"/);
+	       	if (indexpic) {
+	       		comicinfo.indexpic = indexpic[1];
+	       	}
+	     	comicsDao.queryById(function (err3, data3) {
+	       		if (data3 && data3.length != 0) {
+	       			// 有数据，有一些是不更新的
+	       			// 要插入的数据
+		       		var _toinsert = {
+				        name: comicinfo.name,
+				        charactor_counts: comicinfo.charactor_counts,
+				        charactors: comicinfo.charactors,
+				        updatetime: new Date(),
+				        freechars: comicinfo.freechars,
+				        // comments: _b.length ? JSON.stringify(_b) : "",
+				        isover: comicinfo.isover
+				    };
+	       		} else {
+	       			// 要插入的数据
+		       		var _toinsert = {
+				        name: comicinfo.name,
+				        z_ch_name: comicinfo.z_ch_name,
+				        author: comicinfo.author,
+				        charactor_counts: comicinfo.charactor_counts,
+				        tags: comicinfo.tags,
+				        charactors: comicinfo.charactors,
+				        descs: comicinfo.descs,
+				        more: "",
+				        indexpic: comicinfo.indexpic,
+				        share_reward: comicinfo.share_reward,
+				        ad_reward: comicinfo.ad_reward,
+				        freechars: comicinfo.freechars,
+				        listwidth: comicinfo.listwidth,
+				        createtime: new Date(),
+				        updatetime: new Date(),
+				        // comments: _b.length ? JSON.stringify(_b) : "",
+				        isover: comicinfo.isover
+				    };
+	       		}
+
+   				// 先把漫画插入到表中
+		        comicsDao.add(function (err1, data1) {
+			        if (err1) {
+			        	console.log(err1);
+			            // 写入db报错
+			            res.jsonp({
+			            	ret: 4,
+			            	msg: "写入db报错"
+			            });
+			        } else {
+			        	// callback("", "写入db成功");
+			        	// console.log(data1);
+			        	// 还要写入章节表
+			        	// console.log(data1.insertId);
+			        	
+			        	// setTimeout(function () {
+			        		render(data1.insertId, req.query.type == 1 ? 0 : (data3 && data3[0] && data3[0].charactor_counts));
+			        	// }, 100);
+
+			        	res.jsonp({
+			            	ret: 0,
+			            	msg: "正在构建中"
+			            });
+			        }
+			    }, _toinsert , {
+			        key: "name"
+			    });
+	       	}, comicinfo.name);
+
+	        function render (comicid, fromlen) {
+	        	console.log(comicid, fromlen);
+	            var funcs = [];
+	            // console.log(comicid, charactors);
+	            charactors.forEach(function (ceil, index) {
+	                funcs.push(function (innerCall) {
+	                    getPage({
+	                        url: ceil.url,
+	                        name: ceil.name.replace(/\?/g, "").replace(/\:/g, "_"),
+	                        index: index,
+	                        comicid: comicid,
+	                        comicname: comicinfo.name
+	                    }, function (err, data) {
+	                        innerCall("", data);
+	                    });
+	                });
+	            });
+	            // 数据fromlen ? funcs.slice(fromlen) : funcs
+	            async.parallelLimit(fromlen ? funcs.slice(fromlen) : funcs, 3, function(err, data) {
+	            // async.parallelLimit(funcs.slice(0,1), 3, function(err, data) {
+	                // res.jsonp("", JSON.stringify(data));
+		            console.log(JSON.stringify(data));
+	            });
+	        }
+
+        } catch (e) {
+        	console.log(e);
+            // 页面内部解析出错
+            res.jsonp({
+            	ret: 4,
+            	msg: "获得数据报错"
+            });
+        }
+    });
+
+    function getPage (obj, pagecallback, trytime) {
+    	// console.log(obj);
+        requestTry(obj.url, function (err, data) {
+            try {
+                data = data.body.replace(/[\r\n\t]/g,"");
+                // 获得urls
+                var chapterPath = data.match(/var chapterPath = "([^"]*)"/)[1];
+                var chapterImages = JSON.parse(data.match(/var chapterImages = (\[[^\]]*\])/)[1]);
+
+                var urls = Array.from(chapterImages, function (ceil) {return /^http/.test(ceil) ? ceil : ("https://res.xiaoqinre.com/" + chapterPath + ceil);});
+                // doByUrls(urls);
+                // 获得urls之后要做的事情
+                doByUrls(urls);
+                function doByUrls (urls) {
+                	charactorsDao.add(function (err2, data2) {
+                   		if (err2) {
+                   			console.log(err2);
+                   		}
+                   		// console.log("AAAAA", obj + " " + (err2 ? JSON.stringify(err2) : ""));
+                   		console.log("number" + (obj.index + 1) + ". " + obj.name + " exec " + (err2 ? "failed" : "success"));
+			            
+			            // 要写入成功之后，才结束
+			            pagecallback("", err2 ? {
+		                    url: obj.url,
+		                    reason: err2.toString()
+		                } : "");
+			        }, {
+			            name: obj.name,
+			            comic_index: obj.index + 1,
+			            pic_count: urls.length,
+			            comic_name: obj.comicname,
+			            route: obj.comicname + "/" + (obj.index + 1),
+			            read_count: 0,
+			            comic_id: 0,
+			            urls: JSON.stringify(urls)
+			        }, {
+			            key: "route",
+			            tablename: "charactors_" + ("0" + (obj.comicid % 100)).slice(-2)
+			        });
+                }
+            } catch(e) {
+            	// 执行失败之后，再次重试一遍吧
+            	if (!trytime) {
+            		getPage (obj, pagecallback, 1);
+            	} else {
+            		// 页面内部解析出错
+	                pagecallback("", {
+	                    url: obj.url,
+	                    reason: e.toString()
+	                });
+            	}
+            }
+        });
+    }
+}
+
 // 有一些列表
 exports.gettobuild = function (req, res, next) {
 	comicsDao.queryList(function (err, data) {
@@ -5994,27 +6811,50 @@ exports.search = function (req, res, next) {
 			}, 8000);
 
 			// 去mh1234搜索
-			request("http://m.pufei.cc/e/search/?searchget=1&tbname=mh&show=title,player,playadmin,bieming,pinyin,playadmin&tempid=4&keyboard=" + encodeURIComponent(req.query.comic), function (err, data0) {
-			// 去toho搜一下
-			// request("https://m.tohomh123.com/action/Search?page=1&keyword=" + encodeURIComponent(req.query.comic), function (err, data0) {
-		        // 回来之后，就把计时器去掉
+			// request("https://m.mh1234.com/search/?keywords=" + encodeURIComponent(req.query.comic), function (err, data0) {
+			let buf = iconvLite.encode(req.query.comic, 'gbk');
+			var _strname = '';
+			for (var i = 0; i < buf.length; i++) {
+			    _strname += '%' + buf[i].toString(16).toUpperCase();
+			}
+			request({
+				url: "http://m.pufei.cc/e/search/?searchget=1&tbname=mh&show=title,player,playadmin,bieming,pinyin,playadmin&tempid=4&keyboard=" + _strname
+			}).on('response',function(res){
+		    	var chunks = [];
+		    	res.on('data',function(chunk){
+		        	chunks = chunks.concat(chunk);
+		    	})
+
+		    	res.on('end',function(){
+		        	var buf = Buffer.concat(chunks);
+		        	// 转码
+		        	var text = iconvLite.decode(buf,'gbk');
+		        	// console.log(text);
+		        	_doback && _doback("", text);
+		    	})
+			}).on('error', function (res) {
+				_doback && _doback("请求异常了！", "");
+			});
+
+			function _doback (err, data) {
+				// 回来之后，就把计时器去掉
 		       	clearTimeout(_timer);
 
 		       	try {
-		       		data0 = data0.body.replace(/[\r\n\t]/g,"");
+		       		data0 = data.replace(/[\r\n\t]/g,"");
 			        var haveResult = false;
-			        if (!/没有找到数据。/.test(data0)) {
+			        if (!/没有搜索到相关的内容/.test(data0)) {
 			        	haveResult = true;
 			        }
 			        if (haveResult) {
 			        	try {
 			        		// data0 = data0.match(/mh-list col7(?:(?!<\/ul>).)+<\/ul>/)[0].match(/<li>(?:(?!<\/li>).)+<\/li>/g);
 				        	// data0 = data0.match(/am-thumbnails list">(?:(?!<\/ul>).)+<\/ul>/)[0].match(/<li(?:(?!<\/li>).)+<\/li>/g);
-				        	data0 = data0.match(/itemBox(?:(?!itemBox).)+/g)
+				        	data0 = data0.match(/<a href="\/manhua\/\d+"(?:(?!<\/dl><\/a>).)+<\/dl><\/a>/g);
 				        	// 返回列表
 				        	data0.forEach(function (ceil) {
 				        		// var _tname = ceil.match(/href="\/([^\/]+)\/"/)[1];
-				        		var _tname = ceil.match(/title[^>]+>((?:(?!<\/a>).)+)<\/a>/)[1];
+				        		var _tname = ceil.match(/<h3>((?:(?!<\/h3>).)+)<\/h3>/)[1];
 				        		if (!_t.some(function (cceil) {return cceil.zname == _tname})) {
 				        			// _t.push({
 					        		// 	name: _tname,
@@ -6028,9 +6868,10 @@ exports.search = function (req, res, next) {
 					        			// name: _tname,
 					        			zname: _tname,
 					        			// pic: ceil.match(/<img src="([^"])+)/)[1].replace(/^https:/, "http:"),
-					        			pic: "https://www.onhit.cn/sanpk/comic-proxy3?image=" + encodeURIComponent(ceil.match(/<img src="([^"]+)/)[1].replace(/^https:/, "http:")),
+					        			pic: ceil.match(/data-src="([^"]+)/)[1].replace(/^https:/, "http:"),
 					        			// more: ceil.match(/<span class="tip">([^<]+)</)[1],
-					        			more: ceil.match(/a class="coll"[^>]+>((?:(?!<\/a>).)+)<\/a>/)[1],
+					        			id: ceil.match(/href="\/manhua\/(\d+)/)[1],
+					        			more: ceil.match(/更新至：<\/dt><dd>((?:(?!<\/dd>).)+)<\/dd>/)[1],
 					        			nobuild: true
 					        		});
 				        		}
@@ -6062,8 +6903,7 @@ exports.search = function (req, res, next) {
 		       		console.log("搜索解析报错2", e);
 		       		sendBack({ret: 0, msg: "", data: _t});
 		       	}
-		        
-		    });
+			}
 		}
 	}, [{
 		z_ch_name: {
@@ -6121,11 +6961,21 @@ exports.record = function (req, res, next) {
 			}
 		}
 
-		_t.push({
+		var _obj = {
 			v: req.query.value,
 			t: new Date(),
 			userid: req.cookies.nameid || req.query.nameid
-		});
+		};
+
+		// 记录appid
+		if (req.query.key == "wantedComics") {
+			var nowappid = req.headers.referer.match(/servicewechat\.com\/([^\/]+)/);
+		    if (nowappid) {
+		      	_obj.appid = nowappid[1];
+		    }
+		}
+		_t.push(_obj);
+
 		// 继续保存
 		basic.set(function (err, data) {
 			if (err) {
@@ -6189,14 +7039,19 @@ exports.noticebuildsuccess = function (req, res, next) {
 		return false;
 	}
 
-	// 获得appid
-	var nowappid = req.headers.referer.match(/servicewechat\.com\/([^\/]+)/);
-    if (!nowappid) {
-      	res.jsonp({ret: 7, msg: "not wxapp"});
-      	return false;
-    } else {
-      	nowappid = nowappid[1];
-    }
+	// 判断是否有appid
+	if (req.query.appid) {
+		var nowappid = req.query.appid;
+	} else {
+		// 获得appid
+		var nowappid = req.headers.referer.match(/servicewechat\.com\/([^\/]+)/);
+	    if (!nowappid) {
+	      	res.jsonp({ret: 7, msg: "not wxapp"});
+	      	return false;
+	    } else {
+	      	nowappid = nowappid[1];
+	    }
+	}
     // 根据appid，查询template_id信息
     cpsuserDao.queryById(function (apperr , appdata) {
     	if (apperr || (appdata && appdata.length == 0)) {
@@ -6311,10 +7166,19 @@ exports.openvip = function (req, res, next) {
 				var viptime = +data[0].viptime + (day * 24 * 60 * 60 * 1000);
 			} else if (vipflag == "vip-3") {
 				if (!+data[0].viptime || (+data[0].viptime && new Date() >= new Date(+data[0].viptime))) {
-					var viptime = new Date("2020/10/7 23:59:59").getTime();
+					var viptime = new Date("2021/5/5 23:59:59").getTime();
 				} else {
 					res.jsonp({ret: 5, err: "您已经是会员咯，尽情享受吧~", data: []});
 					return false;
+				}
+			} else if (vipflag == "vip-4") {
+				// 这个既可能是续费会员，也可能是新会员
+				if (data[0].viptime && new Date() < new Date(+data[0].viptime)) {
+					// 是续费会员
+					var viptime = +data[0].viptime + (day * 24 * 60 * 60 * 1000);
+				} else {
+					// 是新会员
+					var viptime = new Date().getTime() + (day * 24 * 60 * 60 * 1000);
 				}
 			} else {
 				var viptime = new Date().getTime() + (day * 24 * 60 * 60 * 1000);
@@ -6322,7 +7186,7 @@ exports.openvip = function (req, res, next) {
 			// 更新
 			comicusersDao.update(function (err2, data2) {
 				// 修改成功
-				res.jsonp({ret: 0, err: err2, data: data2});
+				res.jsonp({ret: 0, err: err2, data: data2, viptime: $formatDate(new Date(viptime), "YYYY-MM-DD HH:II"), type: !!data[0].viptime});
 			}, {
 				viptime: viptime
 			}, userid);
@@ -7639,7 +8503,7 @@ exports.getList = function (req, res, next) {
 			}
 			// 来吧，再加一个东东
 			data.data.forEach(function (ceil) {
-				ceil.flag = ceil.name.indexOf("youma") != -1 ? "Y" : ceil.name.indexOf("pufei") != -1 ? "P" : ceil.name.indexOf("duoduo") != -1 ? "DD" : ceil.name.indexOf("yiyi") != -1 ? "YY" : ceil.name.indexOf("vi--") != -1 ? "VI" : ceil.name.indexOf("manmankan--") != -1 ? "K" : ceil.name.indexOf("tutu") != -1 ? "U" : ceil.name.indexOf("manhuadb") != -1 ? "B" : ceil.name.indexOf("mh1234") != -1 ? "M" : ceil.name.indexOf("dfvcb") != -1 ? "D" : "T";
+				ceil.flag = ceil.name.indexOf("youma") != -1 ? "Y" : ceil.name.indexOf("pufei") != -1 ? "P" : ceil.name.indexOf("duoduo") != -1 ? "DD" : ceil.name.indexOf("yiyi") != -1 ? "YY" : ceil.name.indexOf("vi--") != -1 ? "VI" : ceil.name.indexOf("manmankan--") != -1 ? "K" : ceil.name.indexOf("tutu") != -1 ? "U" : ceil.name.indexOf("manhuadb") != -1 ? "B" : ceil.name.indexOf("mh1234") != -1 ? "M" : ceil.name.indexOf("dfvcb") != -1 ? "D" : ceil.name.indexOf("gm--") != -1 ? "G" : ceil.name.indexOf("mt--") != -1 ? "MT" : ceil.name.indexOf("dy--") != -1 ? "DY" : ceil.name.indexOf("gf--") != -1 ? "GF" : "T";
 			});
 			res.jsonp(data);
 		}, {

@@ -152,7 +152,7 @@ exports.getpage = function (req, res, next) {
                     var _tt = data[0];
 
                     // 大事件，要把uid的数据同步过来才行
-                    if (req.query.uid) {
+                    if (req.query.uid && req.query.uid != 'undefined') {
                         // 根据uid，转移数据
                         comicusersDao.queryById(function (err, data) {
                             // 拿到数据之后，再一个一个去同步comicuser表的数据和user表的数据
@@ -493,6 +493,12 @@ exports.getcomic = function (req, res, next) {
             });
 
             data = data[0];
+
+            // 扑飞和youma漫画只保留记录的章节数
+            if (req.query.comic.indexOf('pufei') != -1 || req.query.comic.indexOf('youma') != -1) {
+                data2.data = data2.data.slice(0, data.charactor_counts);
+            }
+
             // 重要的一环，去查询用户信息
             getUserComicInfo(req.cookies.nameid || req.query.nameid, req.query.comic, function (userComicData, newtype, collectCount, userData) {
                 // 有用户信息了
@@ -533,7 +539,8 @@ exports.getcomic = function (req, res, next) {
                     }
                     cpsuserDao.queryById(function (apperr , appdata) {
                         var charas = [];
-                        if (apperr || (appdata && appdata.length == 0) || !(appdata[0].bannerad1 && appdata[0].bannerad2 && appdata[0].videoad1)) {
+                        //  || !(appdata[0].bannerad1 && appdata[0].bannerad2 && appdata[0].videoad1)
+                        if (apperr || (appdata && appdata.length == 0)) {
                             // 没有配置广告信息
                             data2.data.forEach(function (ceil, index) {
                                 charas.push({
@@ -569,7 +576,7 @@ exports.getcomic = function (req, res, next) {
                         data.adcounts = !newtype ? getNewNum(data.ad_reward, 3, data) : getNewNum(data.ad_reward, newtype == 100 ? 1 : newtype, data);
                         data.usertype = newtype;
                         // 去渲染吧
-                        doAfterUser();
+                        doAfterUser(userData);
                     }, nowappid);
                 } else {
                     var charas = [];
@@ -593,12 +600,12 @@ exports.getcomic = function (req, res, next) {
                         list: [ 1 ] 
                     };
                     // 去渲染吧
-                    doAfterUser();
+                    doAfterUser(userData);
                 }
             });
 
             // 获得用户信息之后的操作
-            function doAfterUser () {
+            function doAfterUser (userData) {
                 // 去获得当前漫画的推荐漫画
                 comiclist.getlist(function (guesslist) {
                     data.guesslist = guesslist.data.filter(function (ceil) {return ceil.name != data.name});
@@ -645,7 +652,7 @@ exports.getcomic = function (req, res, next) {
                         // 是的
                         comicDao.queryList(function (err5, data5) {
                             if (err5 || data5 && data5.data && data5.data.length == 0) {
-                                doRes(data);
+                                doRes(data, userData);
                             } else {
                                 // 有资源，给用户打个标
                                 var _tc = [];
@@ -673,9 +680,9 @@ exports.getcomic = function (req, res, next) {
                                 }
                                 
                                 // 加一个flag
-                                data.flag = data.name.indexOf("youma") != -1 ? "Y" : data.name.indexOf("pufei") != -1 ? "P" : data.name.indexOf("duoduo") != -1 ? "DD" : data.name.indexOf("yiyi") != -1 ? "YY" : data.name.indexOf("vi--") != -1 ? "VI" : data.name.indexOf("manmankan--") != -1 ? "K" : data.name.indexOf("tutu") != -1 ? "U" : data.name.indexOf("manhuadb") != -1 ? "B" : data.name.indexOf("mh1234") != -1 ? "M" : data.name.indexOf("dfvcb") != -1 ? "D" : "T";
+                                data.flag = data.name.indexOf("youma") != -1 ? "Y" : data.name.indexOf("pufei") != -1 ? "P" : data.name.indexOf("duoduo") != -1 ? "DD" : data.name.indexOf("yiyi") != -1 ? "YY" : data.name.indexOf("vi--") != -1 ? "VI" : data.name.indexOf("manmankan--") != -1 ? "K" : data.name.indexOf("tutu") != -1 ? "U" : data.name.indexOf("manhuadb") != -1 ? "B" : data.name.indexOf("mh1234") != -1 ? "M" : data.name.indexOf("dfvcb") != -1 ? "D" : data.name.indexOf("gm--") != -1 ? "G" : data.name.indexOf("mt--") != -1 ? "MT" : data.name.indexOf("dy--") != -1 ? "DY" : data.name.indexOf("gf--") != -1 ? "GF" : "T";
                                 
-                                doRes(data);
+                                doRes(data, userData);
                             }
                         }, {
                             z_ch_name: {
@@ -698,9 +705,70 @@ exports.getcomic = function (req, res, next) {
             }
 
             // 返回
-            function doRes (data) {
+            function doRes (data, userData) {
+                userData = userData || {};
                 // 要拿到20个广告位，一次性返回
                 basic.get(function (cpsgoodserr, cpsgoods) {
+                    data.cps = [
+                    // {
+                    //     appid: 'wxe4b873eafbc4a2c1',
+                    //     path: '?wxgamecid=CCBgAAoXkpQY9jHVSkzUOg&game_tunnel=240520'
+                    // }, {
+                    //     appid: 'wx5c432aeea071d773',
+                    //     path: '?wxgamecid=CCBgAAoXkpQY8kWMv1jzX3&game_tunnel=240437'
+                    // }, {
+                    //     appid: 'wx52966cd958bcd65b',
+                    //     path: '?wxgamecid=CCBgAAoXkpQAMVTocw6Q6H-Q&Ads=aiyou2&AdsPos=manshandhr'
+                    // }, 
+                    // {
+                    //     appid: 'wx1b0064fa13f05bbf',
+                    //     path: '?mid=183168&p_mid=1503'
+                    // }, 
+                    // {
+                    //     appid: 'wx1dcf3925581c34d9',
+                    //     path: '?channel=c47005'
+                    // }, 
+                    {
+                        appid: 'wx309cecc8ed172a14',
+                        path: 'pages/tv/index?page=guess'
+                    }, {
+                        appid: 'wxa73f2e7403357bbf',
+                        path: '?from=10509'
+                    }, {
+                        appid: 'wxb5b642503841b076',
+                        path: '?from=10509'
+                    }];
+                    
+                    // 概率
+                    if (Math.random() > 0.8) {
+                        data.cps.push({
+                            appid: 'wx7bcc19f465237030',
+                            path: '/pages/index/index?tj=mh'
+                        }, {
+                            appid: 'wxc3ba1ed4ab5c531d',
+                            path: '?wxgamecid=CCBgAAoXkpQY9sztjR6RXA&form=manhua'
+                        });
+                    }
+
+                    // 判断是否是老用户
+                    // if (userData && (userData.adscount - 0 > 0 && new Date(userData.registertime) < new Date('2021/5/8'))) {
+                    //     // 老用户
+                    //     var _ttt = [{
+                    //         appid: 'wx6e5c154e312a5003',
+                    //         path: 'pages/web/index?channel=honghao&scene=cxhd:775Q460003-775Q460004'
+                    //     }, {
+                    //         appid: 'wxb7b043d2ff683ce2',
+                    //         path: 'pages/web/index?channel=honghao&scene=cxhd:732Q460003-732Q460004'
+                    //     }, {
+                    //         appid: 'wxabeb40f620be711b',
+                    //         path: 'pages/web/index?channel=honghao&scene=cxhd:715Q460003-715Q460004'
+                    //     }, {
+                    //         appid: 'wx3d12038e5c9e5d62',
+                    //         path: 'pages/web/index?channel=honghao&scene=cxhd:699Q460003-699Q460004'
+                    //     }];
+                    //     data.cps = data.cps.concat(_ttt);
+                    // }
+                    
                     if (cpsgoods) {
                         try {
                             var cps = Array.from(JSON.parse(cpsgoods), function (ceil) {
@@ -709,15 +777,38 @@ exports.getcomic = function (req, res, next) {
                                     path: ceil.page_path
                                 }
                             });
-                            data.cps = cps;
+                            // 拿到全部广告位，一次性返回
+                            data.cps = data.cps.concat(shuffle(cps).slice(0, 6));
                         } catch (e) {}
                     }
 
-                    res.jsonp({
-                        ret: 0,
-                        data: data
-                    });
+                    data.cps = data.cps.slice(0,6);
+
+                    // 查询用户是否有unionid
+                    if (userData.userid) {
+                        userDao.queryById(function (uerr, udata) {
+                            if (uerr || (udata && udata.length == 0)) {
+                                data.union = 'sys';
+                            } else {
+                                data.union = udata[0].unionid;
+                            }
+                            res.jsonp({
+                                ret: 0,
+                                data: data
+                            });
+                        }, userData.userid);
+                    } else {
+                        data.union = 'sys';
+                        res.jsonp({
+                            ret: 0,
+                            data: data
+                        });
+                    }
                 }, "cpsgoods");
+                // res.jsonp({
+                //     ret: 0,
+                //     data: data
+                // });
             }
         }, {
             comic_name: {
@@ -739,7 +830,7 @@ exports.getsearchdata = function (req, res, next) {
         res.jsonp({ret: 3, data: {
             list: [],
             time: new Date().getTime(),
-            isgq: new Date() >= new Date("2020/10/1") && new Date() < new Date("2020/10/8")
+            isgq: new Date() >= new Date("2021/5/1") && new Date() < new Date("2021/5/6")
         }});
     } else {
         nowappid = nowappid[1];
@@ -756,7 +847,7 @@ exports.getsearchdata = function (req, res, next) {
                     res.jsonp({ret: 0, data: {
                         list: [],
                         time: new Date().getTime(),
-                        isgq: new Date() >= new Date("2020/10/1") && new Date() < new Date("2020/10/8")
+                        isgq: new Date() >= new Date("2021/5/1") && new Date() < new Date("2021/5/6")
                     }});
                     return false;
                 }
@@ -788,7 +879,7 @@ exports.getsearchdata = function (req, res, next) {
                         list: _arr.slice(0, 20),
                         tid: tid,
                         time: new Date().getTime(),
-                        isgq: new Date() >= new Date("2020/10/1") && new Date() < new Date("2020/10/8")
+                        isgq: new Date() >= new Date("2021/5/1") && new Date() < new Date("2021/5/6")
                     }});
                 } else {
                     var showKorea = false;
@@ -826,7 +917,7 @@ exports.getsearchdata = function (req, res, next) {
                             tid: tid,
                             showKorea: showKorea,
                             time: new Date().getTime(),
-                            isgq: new Date() >= new Date("2020/10/1") && new Date() < new Date("2020/10/8")
+                            isgq: new Date() >= new Date("2021/5/1") && new Date() < new Date("2021/5/6")
                         }});
                     }, userid);
                 }
@@ -1013,7 +1104,7 @@ exports.getcharsinfo = function (req, res, next) {
                                 // if (_turl.indexOf("cdn.wwwcom.xyz") != -1) {
                                 //     _turl = _turl.replace(/^http?/, "https");
                                 // }
-                                if (_turl.indexOf("wszwhg") != -1 && !/\.jpg$/i.test(_turl) && !/index=\d+$/.test(_turl)) {
+                                if (_turl.indexOf("wszwhg") != -1 && !/\.jpe?g$/i.test(_turl) && !/index=\d+$/.test(_turl)) {
                                     _turl += "_fixed.jpg";
                                 }
                                 if (_turl.indexOf("wszwhg") != -1) {
@@ -1093,7 +1184,8 @@ exports.getcharsinfo = function (req, res, next) {
                             nowappid = nowappid[1];
                             // 查询广告信息
                             cpsuserDao.queryById(function (apperr , appdata) {
-                                if (apperr || (appdata && appdata.length == 0) || !(appdata[0].bannerad1 && appdata[0].bannerad2)) {
+                                //  || !(appdata[0].bannerad1 && appdata[0].bannerad2)
+                                if (apperr || (appdata && appdata.length == 0)) {
                                     doback();
                                 } else {
                                     var _usead1 = Math.random() > 0.5;
@@ -1140,17 +1232,17 @@ exports.getcharsinfo = function (req, res, next) {
                                                 comiclist.getlist(function (gslist) {
                                                     // res.jsonp(data);
                                                     data.bottomtj = gslist && gslist.data && gslist.data[Math.floor(Math.random() * gslist.data.length)];
-                                                    doRes(data);
+                                                    doRes(data, data3);
                                                 }, {
                                                     cate: "韩国"
                                                 });
                                             } else {
                                                 data.bottomtj = data.guesslist ? data.guesslist[Math.floor(Math.random() * data.guesslist.length)] : "";
-                                                doRes(data);
+                                                doRes(data, data3);
                                             }
                                         } else {
                                             // 不用
-                                            doRes(data);
+                                            doRes(data, data3);
                                         }
                                     }
                                 }, user);
@@ -1170,8 +1262,67 @@ exports.getcharsinfo = function (req, res, next) {
             cate: data[0].charactors
         });
 
-        function doRes (data) {
+        function doRes (data, userData) {
+            userData = userData || {};
             basic.get(function (cpsgoodserr, cpsgoods) {
+                data.cps = [
+                // {
+                //     appid: 'wxe4b873eafbc4a2c1',
+                //     path: '?wxgamecid=CCBgAAoXkpQY9jHVSkzUOg&game_tunnel=240520'
+                // }, {
+                //     appid: 'wx5c432aeea071d773',
+                //     path: '?wxgamecid=CCBgAAoXkpQY8kWMv1jzX3&game_tunnel=240437'
+                // }, {
+                //     appid: 'wx52966cd958bcd65b',
+                //     path: '?wxgamecid=CCBgAAoXkpQAMVTocw6Q6H-Q&Ads=aiyou2&AdsPos=manshandhr'
+                // }, 
+                // {
+                //     appid: 'wx1b0064fa13f05bbf',
+                //     path: '?mid=183168&p_mid=1503'
+                // }, 
+                // {
+                //     appid: 'wx1dcf3925581c34d9',
+                //     path: '?channel=c47005'
+                // }, 
+                {
+                    appid: 'wx309cecc8ed172a14',
+                    path: 'pages/tv/index?page=guess'
+                }, {
+                    appid: 'wxa73f2e7403357bbf',
+                    path: '?from=10509'
+                }, {
+                    appid: 'wxb5b642503841b076',
+                    path: '?from=10509'
+                }];
+
+                // 概率
+                if (Math.random() > 0.8) {
+                    data.cps.push({
+                        appid: 'wx7bcc19f465237030',
+                        path: '/pages/index/index?tj=mh'
+                    }, {
+                        appid: 'wxc3ba1ed4ab5c531d',
+                        path: '?wxgamecid=CCBgAAoXkpQY9sztjR6RXA&form=manhua'
+                    });
+                }
+
+                // if (userData && (userData.adscount - 0 > 0 && new Date(userData.registertime) < new Date('2021/5/8'))) {
+                //     var _ttt = [{
+                //         appid: 'wx6e5c154e312a5003',
+                //         path: 'pages/web/index?channel=honghao&scene=cxhd:775Q460003-775Q460004'
+                //     }, {
+                //         appid: 'wxb7b043d2ff683ce2',
+                //         path: 'pages/web/index?channel=honghao&scene=cxhd:732Q460003-732Q460004'
+                //     }, {
+                //         appid: 'wxabeb40f620be711b',
+                //         path: 'pages/web/index?channel=honghao&scene=cxhd:715Q460003-715Q460004'
+                //     }, {
+                //         appid: 'wx3d12038e5c9e5d62',
+                //         path: 'pages/web/index?channel=honghao&scene=cxhd:699Q460003-699Q460004'
+                //     }];
+                //     data.cps = data.cps.concat(_ttt);
+                // }
+
                 if (cpsgoods) {
                     try {
                         var cps = Array.from(JSON.parse(cpsgoods), function (ceil) {
@@ -1180,15 +1331,80 @@ exports.getcharsinfo = function (req, res, next) {
                                 path: ceil.page_path
                             }
                         });
-                        data.cps = cps[Math.floor(cps.length * Math.random())];
+                        // 拿到全部广告位，一次性返回
+                        data.cps = data.cps.concat(shuffle(cps).slice(0, 6));
                     } catch (e) {}
                 }
+                
+                data.cps = data.cps.slice(0,6);
+                data.cps = data.cps[Math.floor(Math.random() * data.cps.length)];
+                data.cpsinfo = [
+                // {
+                //     pic: 'http://img13.360buyimg.com/jdphoto/jfs/t1/177785/14/3685/258703/609bb054Ea1eeb161/18460ec6f31cf615.jpg',
+                //     appid: 'wx1dcf3925581c34d9',
+                //     path: '?channel=c47005'
+                // }, 
+                {
+                    pic: 'https://img30.360buyimg.com/img/s650x200_jfs/t1/190366/38/3651/55135/60a231f9E8865e228/884e97b9d900efc8.gif',
+                    appid: 'wx7bcc19f465237030',
+                    path: '/pages/index/index?tj=mh'
+                }, {
+                    pic: 'http://img11.360buyimg.com/jdphoto/jfs/t1/172917/12/11241/38282/60ab4d57E0f851f44/236036e1dd06f473.jpg',
+                    appid: 'wxc3ba1ed4ab5c531d',
+                    path: '?wxgamecid=CCBgAAoXkpQY9sztjR6RXA&form=manhua'
+                }];
+                // data.cpsinfo = [{
+                //     pic: 'https://img13.360buyimg.com/img/s650x120_jfs/t1/177609/23/2452/34760/6092a74fEf2d087bb/91ec02cd9eabe175.jpg',
+                //     appid: 'wx6e5c154e312a5003',
+                //     path: 'pages/web/index?channel=honghao&scene=cxhd:775Q460003-775Q460004'
+                // }, {
+                //     pic: 'https://img30.360buyimg.com/img/s650x120_jfs/t1/175460/5/7995/32864/6092a751E12d873ce/5d51b55660c734bc.jpg',
+                //     appid: 'wxb7b043d2ff683ce2',
+                //     path: 'pages/web/index?channel=honghao&scene=cxhd:732Q460003-732Q460004'
+                // }, {
+                //     pic: 'https://img10.360buyimg.com/img/s650x120_jfs/t1/176632/20/8192/29983/6092a74fE340515ec/667b211033eebe31.jpg',
+                //     appid: 'wx3d12038e5c9e5d62',
+                //     path: 'pages/web/index?channel=honghao&scene=cxhd:699Q460003-699Q460004'
+                // }, {
+                //     pic: 'https://img12.360buyimg.com/img/s650x120_jfs/t1/193860/24/1389/30610/6092a74fE1f1a9f60/b858db0331c44f1b.jpg',
+                //     appid: 'wxabeb40f620be711b',
+                //     path: 'pages/web/index?channel=honghao&scene=cxhd:715Q460003-715Q460004'
+                // }];
+                data.cpsinfo = data.cpsinfo[Math.floor(Math.random() * data.cpsinfo.length)];
+                // data.cpsinfo = {};
 
-                res.jsonp({
-                    ret: 0,
-                    data: data
-                });
+                // 查询用户是否有unionid
+                if (userData.userid) {
+                    userDao.queryById(function (uerr, udata) {
+                        if (uerr || (udata && udata.length == 0)) {
+                            data.union = 'sys';
+                        } else {
+                            data.union = udata[0].unionid;
+                        }
+                        res.jsonp({
+                            ret: 0,
+                            data: data
+                        });
+                    }, userData.userid);
+                } else {
+                    data.union = 'sys';
+                    res.jsonp({
+                        ret: 0,
+                        data: data
+                    });
+                }
+
             }, "cpsgoods");
+            // data.cps = [{
+            //     appid: 'wxe4b873eafbc4a2c1',
+            //     path: '?wxgamecid=CCBgAAoXkpQY9jHVSkzUOg&game_tunnel=240520'
+            // }, {
+            //     appid: 'wx5c432aeea071d773',
+            //     path: '?wxgamecid=CCBgAAoXkpQY8kWMv1jzX3&game_tunnel=240437'
+            // }];
+            // data.cps = data.cps[Math.floor(Math.random() * data.cps.length)];
+            // 返回一个图片和链接
+            
         }
     }, req.query.comic);
 }

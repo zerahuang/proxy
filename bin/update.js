@@ -1,10 +1,12 @@
 // 引用dao
 var comicsDao = require("../dao/comics");
+var charactorsDao = require("../dao/charactors");
 var http = require("http");
 var https = require("https");
 var url = require("url");
 var async = require("async");
 var request = require("request");
+var basic = require("../model/basic");
 var comicRoute = require("../routes/comic");
 
 
@@ -417,6 +419,166 @@ function doit (item, callback) {
           }
         }
       }, function () {});
+    } else if (item.name.indexOf("gm--") != -1) {
+      comicRoute.buildComic10({
+        query: {
+          comicid: item.name.replace("gm--", "")
+        }
+      }, {
+        jsonp: function (data) {
+          if (data && data.ret == 0) {
+            callback("", {
+              name: item.z_ch_name,
+              msg: "更新成功"
+            });
+          } else {
+            // 有异常，就更新一下
+            // 判断是否到限制
+            if (item.updatetried == 2) {
+              comicsDao.update(function (err3, data3) {
+                callback("", {
+                  name: item.z_ch_name + "[" + item.name + "]",
+                  msg: "更新失败",
+                  err: data.err || data.msg
+                });
+              }, {
+                updatetried: 0,
+                updatetime: new Date()
+              }, item.name);
+            } else {
+              comicsDao.update(function (err3, data3) {
+                callback("", {
+                  name: item.z_ch_name + "[" + item.name + "]",
+                  msg: "更新失败",
+                  err: data.err
+                });
+              }, {
+                updatetried: !item.updatetried ? 1 : +item.updatetried + 1
+              }, item.name);
+            }
+          }
+        }
+      }, function () {});
+    } else if (item.name.indexOf("mt--") != -1) {
+      comicRoute.buildComic13({
+        query: {
+          comicid: item.name.replace("mt--", "")
+        }
+      }, {
+        jsonp: function (data) {
+          if (data && data.ret == 0) {
+            callback("", {
+              name: item.z_ch_name,
+              msg: "更新成功"
+            });
+          } else {
+            // 有异常，就更新一下
+            // 判断是否到限制
+            if (item.updatetried == 2) {
+              comicsDao.update(function (err3, data3) {
+                callback("", {
+                  name: item.z_ch_name + "[" + item.name + "]",
+                  msg: "更新失败",
+                  err: data.err || data.msg
+                });
+              }, {
+                updatetried: 0,
+                updatetime: new Date()
+              }, item.name);
+            } else {
+              comicsDao.update(function (err3, data3) {
+                callback("", {
+                  name: item.z_ch_name + "[" + item.name + "]",
+                  msg: "更新失败",
+                  err: data.err
+                });
+              }, {
+                updatetried: !item.updatetried ? 1 : +item.updatetried + 1
+              }, item.name);
+            }
+          }
+        }
+      }, function () {});
+    } else if (item.name.indexOf("dy--") != -1) {
+      comicRoute.buildComic14({
+        query: {
+          comicid: item.name.replace("dy--", "")
+        }
+      }, {
+        jsonp: function (data) {
+          if (data && data.ret == 0) {
+            callback("", {
+              name: item.z_ch_name,
+              msg: "更新成功"
+            });
+          } else {
+            // 有异常，就更新一下
+            // 判断是否到限制
+            if (item.updatetried == 2) {
+              comicsDao.update(function (err3, data3) {
+                callback("", {
+                  name: item.z_ch_name + "[" + item.name + "]",
+                  msg: "更新失败",
+                  err: data.err || data.msg
+                });
+              }, {
+                updatetried: 0,
+                updatetime: new Date()
+              }, item.name);
+            } else {
+              comicsDao.update(function (err3, data3) {
+                callback("", {
+                  name: item.z_ch_name + "[" + item.name + "]",
+                  msg: "更新失败",
+                  err: data.err
+                });
+              }, {
+                updatetried: !item.updatetried ? 1 : +item.updatetried + 1
+              }, item.name);
+            }
+          }
+        }
+      }, function () {});
+    } else if (item.name.indexOf("gf--") != -1) {
+      comicRoute.buildComic15({
+        query: {
+          comicid: item.name.replace("gf--", "")
+        }
+      }, {
+        jsonp: function (data) {
+          if (data && data.ret == 0) {
+            callback("", {
+              name: item.z_ch_name,
+              msg: "更新成功"
+            });
+          } else {
+            // 有异常，就更新一下
+            // 判断是否到限制
+            if (item.updatetried == 2) {
+              comicsDao.update(function (err3, data3) {
+                callback("", {
+                  name: item.z_ch_name + "[" + item.name + "]",
+                  msg: "更新失败",
+                  err: data.err || data.msg
+                });
+              }, {
+                updatetried: 0,
+                updatetime: new Date()
+              }, item.name);
+            } else {
+              comicsDao.update(function (err3, data3) {
+                callback("", {
+                  name: item.z_ch_name + "[" + item.name + "]",
+                  msg: "更新失败",
+                  err: data.err
+                });
+              }, {
+                updatetried: !item.updatetried ? 1 : +item.updatetried + 1
+              }, item.name);
+            }
+          }
+        }
+      }, function () {});
     } else {
     }
   } catch (e) {
@@ -442,6 +604,7 @@ function doUpdate () {
     if (err) {
       console.log(err);
       console.log("查询失败");
+      basic.mailme(err, "更新进程查询漫画列表失败");
     } else {
       // 过滤一下
       // var _tdata = data.data.filter(function (ceil) {
@@ -478,7 +641,7 @@ function doUpdate () {
     }
   }, {
     updatetime: {
-      value: $formatDate(new Date(new Date() - 2 * 24 * 60 * 60 * 1000), "YYYY-MM-DD HH:II:SS"),
+      value: $formatDate(new Date(new Date() - 3 * 24 * 60 * 60 * 1000), "YYYY-MM-DD HH:II:SS"),
       type: "<"
     },
     isover: [{
@@ -521,7 +684,7 @@ function $addZero(v,size){
 // 每隔5分钟查询一次
 setInterval(function () {
   doUpdate();
-}, 3 * 60 * 1000);
+}, 5 * 60 * 1000);
 
 
 doUpdate();
