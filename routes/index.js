@@ -4,6 +4,7 @@ var https = require("https");
 var http = require("http");
 var url = require("url");
 var request = require("request");
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 /* GET home page. */
 router.get('/', function(req, res, next) {
 	var routeFunc = arguments.callee;
@@ -28,6 +29,7 @@ router.get('/', function(req, res, next) {
 	    // path: _purl.path,
 	    method: "GET",
         timeout: 8000,
+        pool: {maxSockets: Infinity},
 	    headers: {
 	         "Connection": "keep-alive",
 	         "Pragma": "no-cache",
@@ -44,24 +46,25 @@ router.get('/', function(req, res, next) {
 	};
 
     function doback () {
-        req.query.times = /^\d+$/.test(req.query.times) ? req.query.times : 0;
-        if (req.query.times >= 2) {
-            // 3次了，直接403
-            res.writeHead(403);
-            res.end();
-        } else {
-            res.writeHead(302, {'Location': "http://onhit.cn/sanpk/comic-proxy3?image=" + encodeURIComponent(_url.replace(/^https?:\/\//, "")) + "&times=" + (+req.query.times + 1)});
-            res.end();
+        try {
+            req.query.times = /^\d+$/.test(req.query.times) ? req.query.times : 0;
+            if (req.query.times >= 2) {
+                // 3次了，直接403
+                res.writeHead(403);
+                res.end();
+            } else {
+                res.writeHead(302, {'Location': "http://onhit.cn/sanpk/comic-proxy3?image=" + encodeURIComponent(_url.replace(/^https?:\/\//, "")) + "&times=" + (+req.query.times + 1)});
+                res.end();
+            }
+        } catch(e) {
+            console.log(e, 'timeout');
         }
     }
 
-    try {
-        request(options).on('error', function(err) {
-            doback();
-        }).pipe(res);
-    } catch(e) {
-        console.log(e, 11111111);
-    }
+    request(options).on('error', function(err) {
+        doback();
+    }).pipe(res);
+    
     // var _t = request(options, function (error, response, body) {
     //     // if (!error && response.statusCode == 200) {
     //     //     res.set('Content-Type', 'image/png;');
