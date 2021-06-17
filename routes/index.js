@@ -84,6 +84,8 @@ router.get('/', function(req, res, next) {
     }, 5000);
 
 	request.on('error', function(e) {
+        clearTimeout(request_timer);
+        request.abort();
 	    // res.send({ret:1,errmsg:'problem with request: ' + e.message});
         req.query.times = /^\d+$/.test(req.query.times) ? req.query.times : 0;
         // if (req.query.times >= 3) {
