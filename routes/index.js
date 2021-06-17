@@ -27,7 +27,7 @@ router.get('/', function(req, res, next) {
 	    // port: _purl.port,
 	    // path: _purl.path,
 	    method: "GET",
-        timeout: 5000,
+        timeout: 8000,
 	    headers: {
 	         "Connection": "keep-alive",
 	         "Pragma": "no-cache",
