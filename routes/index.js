@@ -38,7 +38,18 @@ router.get('/', function(req, res, next) {
 	         "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8,ja;q=0.7,zh-TW;q=0.6"
 	    }
 	};
+    var request_timer = null;
 	var request = https.request(options, function(response){
+        // 取消
+        clearTimeout(request_timer);
+        // 等待响应60秒超时
+        var response_timer = setTimeout(function() {
+            request.destroy();
+            console.log('Response Timeout.');
+            res.writeHead(403);
+            res.end();
+        }, 8000);
+
 		if (response && response.headers && response.headers.location) {
             req.query.image = response.headers.location;
             routeFunc(req, res, next);
@@ -50,15 +61,24 @@ router.get('/', function(req, res, next) {
                 size += chunk.length;
             });
             response.on('end', function(){
+                clearTimeout(response_timer);
                 var data = Buffer.concat(chunks, size);
                 res.set('Content-Type', 'image/jpeg');
                 res.send(data);
             });
-       		 }
+       	}
 	});
 
+    // 请求5秒超时
+    request_timer = setTimeout(function() {
+        request.abort();
+        console.log('Request Timeout.');
+    }, 5000);
+
 	request.on('error', function(e) {
-	    res.send({ret:1,errmsg:'problem with request: ' + e.message});
+	    // res.send({ret:1,errmsg:'problem with request: ' + e.message});
+        res.writeHead(403);
+        res.end(); 
 	}); 
 
 	request.end();
