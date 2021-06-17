@@ -46,8 +46,16 @@ router.get('/', function(req, res, next) {
         var response_timer = setTimeout(function() {
             request.destroy();
             console.log('Response Timeout.');
-            res.writeHead(403);
-            res.end();
+            // 判断一下是要302，还是要403
+            req.query.times = /^\d+$/.test(req.query.times) ? req.query.times : 0;
+            if (req.query.times >= 3) {
+                // 3次了，直接403
+                res.writeHead(403);
+                res.end();
+            } else {
+                res.writeHead(302, {'Location': "http://onhit.cn/sanpk/comic-proxy3?image=" + encodeURIComponent(_url.replace(/^https?:\/\//, "")) + "&times=" + (+req.query.times + 1)});
+                res.end();
+            }
         }, 8000);
 
 		if (response && response.headers && response.headers.location) {
@@ -77,8 +85,15 @@ router.get('/', function(req, res, next) {
 
 	request.on('error', function(e) {
 	    // res.send({ret:1,errmsg:'problem with request: ' + e.message});
-        res.writeHead(403);
-        res.end(); 
+        req.query.times = /^\d+$/.test(req.query.times) ? req.query.times : 0;
+        if (req.query.times >= 3) {
+            // 3次了，直接403
+            res.writeHead(403);
+            res.end();
+        } else {
+            res.writeHead(302, {'Location': "http://onhit.cn/sanpk/comic-proxy3?image=" + encodeURIComponent(_url.replace(/^https?:\/\//, "")) + "&times=" + (+req.query.times + 1)});
+            res.end();
+        }
 	}); 
 
 	request.end();
