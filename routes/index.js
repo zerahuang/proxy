@@ -4,6 +4,7 @@ var https = require("https");
 var http = require("http");
 var url = require("url");
 var request = require("request");
+var fs = require("fs");
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 global.errortimes = 0;
 /* GET home page. */
@@ -69,6 +70,7 @@ router.get('/', function(req, res, next) {
             console.log("需要重启");
             fs.writeFile('./pm2tostart/starttime.txt', new Date().toGMTString(), function () {});
         } else {
+            global.errortimes++;
             console.log("global.errortimes=" + global.errortimes);
             doback();
         }
