@@ -47,11 +47,11 @@ router.get('/', function(req, res, next) {
             request.destroy();
             console.log('Response Timeout.');
             // 判断一下是要302，还是要403
-            req.query.times = /^\d+$/.test(req.query.times) ? req.query.times : 0;
+            // req.query.times = /^\d+$/.test(req.query.times) ? req.query.times : 0;
             // if (req.query.times >= 3) {
                 // 3次了，直接403
-                res.writeHead(403);
-                res.end();
+                // res.writeHead(403);
+                // res.end();
             // } else {
             //     res.writeHead(302, {'Location': "http://onhit.cn/sanpk/comic-proxy3?image=" + encodeURIComponent(_url.replace(/^https?:\/\//, "")) + "&times=" + (+req.query.times + 1)});
             //     res.end();
