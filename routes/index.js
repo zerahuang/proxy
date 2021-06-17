@@ -5,6 +5,7 @@ var http = require("http");
 var url = require("url");
 var request = require("request");
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+global.errortimes = 0;
 /* GET home page. */
 router.get('/', function(req, res, next) {
 	var routeFunc = arguments.callee;
@@ -62,7 +63,15 @@ router.get('/', function(req, res, next) {
     }
 
     request(options).on('error', function(err) {
-        doback();
+        // 判断一下是否需要重启
+        if (global.errortimes > 10) {
+            // 需要重启
+            console.log("需要重启");
+            fs.writeFile('./pm2tostart/starttime.txt', new Date().toGMTString(), function () {});
+        } else {
+            console.log("global.errortimes=" + global.errortimes);
+            doback();
+        }
     }).pipe(res);
     
     // var _t = request(options, function (error, response, body) {
