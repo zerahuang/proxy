@@ -19,7 +19,7 @@ router.get('/', function(req, res, next) {
 		return false;
 	}
 	var _url = decodeURIComponent(req.query.image);
-	_url = _url.replace(/^https?:\/\//, "http://");
+	_url = "http://" + _url.replace(/^https?:\/\//, "");
 	// var _purl = url.parse(_url);
 	var options = {
         url: _url,
@@ -43,17 +43,26 @@ router.get('/', function(req, res, next) {
 	    }
 	};
 
-    request(options).on('error', function(err) {
-        req.query.times = /^\d+$/.test(req.query.times) ? req.query.times : 0;
-        if (req.query.times >= 2) {
-            // 3次了，直接403
-            res.writeHead(403);
-            res.end();
-        } else {
-            res.writeHead(302, {'Location': "http://onhit.cn/sanpk/comic-proxy3?image=" + encodeURIComponent(_url.replace(/^https?:\/\//, "")) + "&times=" + (+req.query.times + 1)});
-            res.end();
+    function doback () {
+        try {
+            req.query.times = /^\d+$/.test(req.query.times) ? req.query.times : 0;
+            if (req.query.times >= 2) {
+                // 3次了，直接403
+                res.writeHead(403);
+                res.end();
+            } else {
+                res.writeHead(302, {'Location': "http://onhit.cn/sanpk/comic-proxy3?image=" + encodeURIComponent(_url.replace(/^https?:\/\//, "")) + "&times=" + (+req.query.times + 1)});
+                res.end();
+            }
+        } catch(e) {
+            console.log(e, 'timeout');
         }
+    }
+
+    request(options).on('error', function(err) {
+        doback();
     }).pipe(res);
+    
     // var _t = request(options, function (error, response, body) {
     //     // if (!error && response.statusCode == 200) {
     //     //     res.set('Content-Type', 'image/png;');
