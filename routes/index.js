@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var https = require("https");
+var http = require("http");
 var url = require("url");
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -17,7 +18,7 @@ router.get('/', function(req, res, next) {
 		return false;
 	}
 	var _url = decodeURIComponent(req.query.image);
-	_url = _url.replace(/^https?:\/\//, "https://");
+	_url = _url.replace(/^https?:\/\//, "http://");
 	var _purl = url.parse(_url);
 	var options = {
 	    hostname: _purl.hostname,
@@ -39,7 +40,7 @@ router.get('/', function(req, res, next) {
 	    }
 	};
     var request_timer = null;
-	var request = https.request(options, function(response){
+	var request = http.request(options, function(response){
         // 取消
         clearTimeout(request_timer);
         // 等待响应60秒超时
