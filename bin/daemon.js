@@ -24,6 +24,10 @@ function dotask () {
         request("http://127.0.0.1:3000/routes/start", function (err, res, body) {
             console.log("do start:", new Date().toLocaleString(), body);
         });
+
+        request("http://127.0.0.1:3001/routes/start", function (err, res, body) {
+            console.log("do start1:", new Date().toLocaleString(), body);
+        });
     }
 }
 
@@ -31,10 +35,16 @@ function doasync () {
     // request("http://127.0.0.1:3000/routes/asyncip", function (err, res, body) {
     //     console.log("do async:", new Date().toLocaleString(), body);
     // });
-    var link = "http://onhit.cn/sanpk/tools-updateip?ip=" + getIPAdress() + "&n=" + encodeURIComponent(fs.readFileSync('name.txt').toString().replace(/\n$/, '')) + "&w=" + (+fs.readFileSync('weight.txt').toString());
+    var link = "http://onhit.cn/sanpk/tools-updateip?ip=" + getIPAdress() + "&n=" + encodeURIComponent(fs.readFileSync('name.txt').toString().replace(/\n$/, '')) + "&w=" + (+fs.readFileSync('weight.txt').toString()) + "&p=3000";
     // console.log(link);
     request(link, function (err, res, body) {
         console.log("do async:", new Date().toLocaleString(), body);
+    });
+
+    link = "http://onhit.cn/sanpk/tools-updateip?ip=" + getIPAdress() + "&n=" + encodeURIComponent(fs.readFileSync('name.txt').toString().replace(/\n$/, '')) + "&w=" + (+fs.readFileSync('weight.txt').toString()) + "&p=3001";
+    // console.log(link);
+    request(link, function (err, res, body) {
+        console.log("do async1:", new Date().toLocaleString(), body);
     });
 }
 // 立即执行一次

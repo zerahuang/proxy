@@ -8253,7 +8253,10 @@ function getfromips (_t) {
         // console.log(_rand);
         var _ret = _t.filter(function (ceil) {return ceil.start < _rand && ceil.end >= _rand});
         if (_ret && _ret.length) {
-            var ip = _ret[0].ip;
+            var ip = {
+            	ip: _ret[0].ip,
+            	p: _ret[0].p || "3000"
+            };
         } else {
             var ip = "";
         }
@@ -8288,7 +8291,7 @@ exports.proxy3 = function (req, res, next) {
 		} else {
 			var nowip = getfromips(dataip);
 		    if (nowip) {
-		        _url = "http://" + nowip + ":3000/?image=" + encodeURIComponent(_url);
+		        _url = "http://" + nowip.ip + ":" + nowip.p + "/?image=" + encodeURIComponent(_url);
 		    } else {
 		        _url = "http://onhit.cn/sanpk/comic-proxy?image=" + encodeURIComponent(_url.replace(/^https?:\/\//, ""));
 		    }

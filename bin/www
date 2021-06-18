@@ -9,20 +9,21 @@ var debug = require('debug')('proxy:server');
 var http = require('http');
 var fs = require("fs");
 var tls = require("tls");
-var https = require("https");
+// var https = require("https");
 
 
-https.createServer({
-    key: fs.readFileSync('./https/private.pem'),
-    cert: fs.readFileSync('./https/file.crt')
-}, app).listen(8001);
+// https.createServer({
+//     key: fs.readFileSync('./https/private.pem'),
+//     cert: fs.readFileSync('./https/file.crt')
+// }, app).listen(8001);
 
 
 /**
  * Get port from environment and store in Express.
  */
-
-var port = normalizePort(process.env.PORT || '3000');
+var dePort = process.argv[2] || '3000';
+global.dePort = dePort;
+var port = normalizePort(process.env.PORT || dePort);
 app.set('port', port);
 
 /**

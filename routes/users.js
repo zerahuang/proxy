@@ -80,14 +80,16 @@ function start (req, res, next) {
                     var ips = JSON.parse(data[0].b_value);
                     // 判断是否有
                     if (!ips.some(function (ceil, index) {
-                        if (ceil.ip == nowip) {
+                        var _p = ceil.p || "3000";
+                        if (ceil.ip == nowip && _p == global.dePort) {
                             return true;
                         }
                     })) {
                         ips.push({
                             ip: nowip,
                             w: +fs.readFileSync('weight.txt').toString(),
-                            n: fs.readFileSync('name.txt').toString().replace(/\n$/, '')
+                            n: fs.readFileSync('name.txt').toString().replace(/\n$/, ''),
+                            p: global.dePort
                         });
                     }
                     // 重新写入
@@ -124,7 +126,8 @@ function stop (req, res, next) {
                 var ips = JSON.parse(data[0].b_value);
                 // 移除
                 ips.some(function (ceil, index) {
-                    if (ceil.n.replace(/\n$/, '') == decodeURIComponent(req.query.name).replace(/\n$/, '')) {
+                    var _p = ceil.p || "3000";
+                    if (ceil.n.replace(/\n$/, '') == decodeURIComponent(req.query.name).replace(/\n$/, '') && _p == global.dePort) {
                         ips.splice(index, 1);
                         return true;
                     }
@@ -167,7 +170,8 @@ function cwight (req, res, next) {
                         var ips = JSON.parse(data[0].b_value);
                         // 更新
                         ips.some(function (ceil, index) {
-                            if (ceil.n.replace(/\n$/, '') == decodeURIComponent(req.query.name).replace(/\n$/, '')) {
+                            var _p = ceil.p || "3000";
+                            if (ceil.n.replace(/\n$/, '') == decodeURIComponent(req.query.name).replace(/\n$/, '') && _p == global.dePort) {
                                 ceil.w = +req.query.w;
                                 return true;
                             }
@@ -206,7 +210,11 @@ function asyncip (req, res, next) {
 // PM2监控改动，自动重启
 function pm2restart (req, res, next) {
     res.jsonp({ret: new Date().toGMTString()});
-    fs.writeFile('./pm2tostart/starttime.txt', new Date().toGMTString(), function () {});
+    // fs.writeFile('./pm2tostart/starttime.txt', new Date().toGMTString(), function () {});
+    setTimeout(function () {
+        var a = null;
+        a.b;
+    }, 10);
 }
 
 // 获得ip
