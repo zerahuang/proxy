@@ -11,5 +11,5 @@ pm2 start npm --name proxy1 --watch ./pm2tostart -- run start_1
 
 echo 'start daemon:'
 pm2 start node --name daemon -- ./bin/daemon.js
-# echo 'start update:'
-# pm2 start node --name update -- ./bin/update
+echo 'start update:'
+pm2 start node --name update -- ./bin/update
