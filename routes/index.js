@@ -50,6 +50,18 @@ router.get('/', function(req, res, next) {
     function doback () {
         try {
             req.query.times = /^\d+$/.test(req.query.times) ? req.query.times : 0;
+            setTimeout(function () {
+                // 判断一下是否需要重启
+                if (global.errortimes >= 10) {
+                    // 需要重启
+                    console.log("需要重启");
+                    var a = null;
+                    a.b;
+                } else {
+                    global.errortimes++;
+                    console.log("global.errortimes=" + global.errortimes);
+                }
+            }, 10);
             if (req.query.times >= 2) {
                 // 3次了，直接403
                 res.writeHead(403);
@@ -64,16 +76,7 @@ router.get('/', function(req, res, next) {
     }
 
     request(options).on('error', function(err) {
-        // 判断一下是否需要重启
-        if (global.errortimes > 10) {
-            // 需要重启
-            console.log("需要重启");
-            fs.writeFile('./pm2tostart/starttime.txt', new Date().toGMTString(), function () {});
-        } else {
-            global.errortimes++;
-            console.log("global.errortimes=" + global.errortimes);
-            doback();
-        }
+        doback();
     }).pipe(res);
     
     // var _t = request(options, function (error, response, body) {
