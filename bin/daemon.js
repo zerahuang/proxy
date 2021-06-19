@@ -1,6 +1,10 @@
 var request = require("request");
 var os = require('os');
 var fs = require('fs');
+var basic = require("../model/basic");
+var cp = require('child_process');
+
+var _noipCount = 0;
 
 function getIPAdress () {
     var interfaces = os.networkInterfaces();
@@ -32,16 +36,35 @@ function dotask () {
 }
 
 function doasync () {
+    // 判断是否需要重启，如果getIPAdress连续3次是空的，那就重启吧
+    var nowip = getIPAdress();
+    if (!nowip) {
+        if (_noipCount >= 3) {
+            _noipCount = 0;
+            // 重启吧
+            // 邮件通知一下
+            basic.mailme(fs.readFileSync('name.txt').toString().replace(/\n$/, '') + '重启', '代理机器要重启了');
+
+            setTimeout(function () {
+                cp.exec('reboot');
+            }, 3000);
+        } else {
+            // 不用重启，但是记时
+            _noipCount++;
+        }
+        return false;
+    }
+    
     // request("http://127.0.0.1:3000/routes/asyncip", function (err, res, body) {
     //     console.log("do async:", new Date().toLocaleString(), body);
     // });
-    var link = "http://onhit.cn/sanpk/tools-updateip?ip=" + getIPAdress() + "&n=" + encodeURIComponent(fs.readFileSync('name.txt').toString().replace(/\n$/, '')) + "&w=" + (+fs.readFileSync('weight.txt').toString()) + "&p=3000";
+    var link = "http://onhit.cn/sanpk/tools-updateip?ip=" + nowip + "&n=" + encodeURIComponent(fs.readFileSync('name.txt').toString().replace(/\n$/, '')) + "&w=" + (+fs.readFileSync('weight.txt').toString()) + "&p=3000";
     // console.log(link);
     request(link, function (err, res, body) {
         console.log("do async:", new Date().toLocaleString(), body);
     });
 
-    link = "http://onhit.cn/sanpk/tools-updateip?ip=" + getIPAdress() + "&n=" + encodeURIComponent(fs.readFileSync('name.txt').toString().replace(/\n$/, '')) + "&w=" + (+fs.readFileSync('weight.txt').toString()) + "&p=3001";
+    link = "http://onhit.cn/sanpk/tools-updateip?ip=" + nowip + "&n=" + encodeURIComponent(fs.readFileSync('name.txt').toString().replace(/\n$/, '')) + "&w=" + (+fs.readFileSync('weight.txt').toString()) + "&p=3001";
     // console.log(link);
     request(link, function (err, res, body) {
         console.log("do async1:", new Date().toLocaleString(), body);
