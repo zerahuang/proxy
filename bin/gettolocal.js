@@ -3,9 +3,10 @@ var charactorsDao = require("../dao/charactors");
 var request = require('request');
 var async = require("async");
 var fs = require("fs");
-// exports.getlist = function (callback, opt) {
-    
-// }
+
+// var baseUrl = '/Users/huangshaolu/Documents/comics';
+var baseUrl = '/root/comics';
+
 function getList (name) {
     comicsDao.queryById(function (err, data) {
         if (err || !(data && data[0])) {
@@ -20,6 +21,41 @@ function getList (name) {
                     // console.log(data2.data.length, data2.data[0]);
                     // 下载一个章节的图片
                     // downloadOne(data2.data[0]);
+
+                    // 新建目录
+                    // 判断是否有目录
+                    try {
+                        fs.statSync(baseUrl + "/" + data[0].name);
+                    } catch (e) {
+                        fs.mkdirSync(baseUrl + "/" + data[0].name, 0777);
+                    }
+                    // 去创建一下cover
+                    // console.log("https" + (data[0].indexpic).replace(/^https?/, '') + (data[0].indexpic.indexOf("?") != -1 ? '&' : '?') + "t=" + Math.random());
+                    var readStream = request({
+                        url: "https" + (data[0].indexpic).replace(/^https?/, '') + (data[0].indexpic.indexOf("?") != -1 ? '&' : '?') + "t=" + Math.random(),
+                        // url: "https://img.beiaduo.org/storage/yy_images/1621160221287642.webp?t=xxa",
+                        followRedirect: false, 
+                        rejectUnauthorized: false,
+                        headers: {
+                            "Referer": "https://www.56hm.com/",
+                            // "Host": "img.xikami.com",
+                            // "Host": "img.beiaduo.org",
+                            "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+                            "Sec-Fetch-Site": "cross-site",
+                            "Sec-Fetch-Mode": "no-cors",
+                            "Sec-Fetch-Dest": "image",
+                            "Accept-Encoding": "gzip",
+                            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8,ja;q=0.7,zh-TW;q=0.6"
+                       }
+                    });
+                    readStream.pipe(fs.createWriteStream(baseUrl + "/" + data[0].name + "/cover"));
+                    readStream.on('end', function() {
+                        console.log('封面下载成功', baseUrl + "/" + data[0].name + "/cover", data[0].indexpic);
+                    });
+                    readStream.on('error', function(err) {
+                        console.log("封面错误信息:" + err, baseUrl + "/" + data[0].name + "/cover", data[0].indexpic);
+                    })
+                    
                     // 要去下载所有章节
                     var funcs = [];
                     data2.data.forEach(function (ceil, index) {
@@ -47,15 +83,6 @@ function getList (name) {
 
 // 下载一个章节
 function downloadOne (info, callback) {
-    // var baseUrl = '/Users/huangshaolu/Documents/comics';
-    var baseUrl = '/root/comics';
-    // 判断是否有目录
-    try {
-        fs.statSync(baseUrl + "/" + info.comic_name);
-    } catch (e) {
-        fs.mkdirSync(baseUrl + "/" + info.comic_name, 0777);
-    }
-    
     try {
         fs.statSync(baseUrl + "/" + info.comic_name + "/" + info.comic_index);
     } catch (e) {
@@ -70,33 +97,41 @@ function downloadOne (info, callback) {
         _urls.forEach(function (ceil, index) {
             funcs.push(function (innerCall) {
                 console.log(ceil);
-                var readStream = request({
-                    url: ceil,
-                    headers: {
-                        "Referer": "https://www.84hm.com/",
-                        "Host": "img.beiaduo.org",
-                        "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
-                        "Sec-Fetch-Site": "cross-site",
-                        "Sec-Fetch-Mode": "no-cors",
-                        "Sec-Fetch-Dest": "image",
-                        "Accept-Encoding": "gzip",
-                        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8,ja;q=0.7,zh-TW;q=0.6"
-                   }
-                });
-                readStream.pipe(fs.createWriteStream(baseUrl + "/" + info.comic_name + "/" + info.comic_index + "/" + index));
-                readStream.on('end', function() {
-                    console.log('文件下载成功', info.comic_index + "/" + index);
+                try {
+                    var fileinfo = fs.statSync(baseUrl + "/" + info.comic_name + "/" + info.comic_index + "/" + index);
+
+                    if (!fileinfo.size) {
+                        // console.log(fileinfo);
+                        // 为空
+                        throw new Error('size Error')
+                        return false;
+                    }
                     innerCall('');
-                });
-                readStream.on('error', function() {
-                    console.log("错误信息:" + err, info.comic_index + "/" + index);
-                    innerCall('');
-                })
-                // writeStream.on("finish", function() {
-                //     console.log("文件写入成功", info.comic_index + "/" + index);
-                //     writeStream.end();
-                //     innerCall();
-                // });
+                } catch (e) {
+                    var readStream = request({
+                        url: ceil + (ceil.indexOf("?") != -1 ? '&' : '?') + "t=" + Math.random(),
+                        headers: {
+                            // "Referer": "https://www.84hm.com/",
+                            "Referer": "https://www.56hm.com/",
+                            // "Host": "img.beiaduo.org",
+                            "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+                            "Sec-Fetch-Site": "cross-site",
+                            "Sec-Fetch-Mode": "no-cors",
+                            "Sec-Fetch-Dest": "image",
+                            "Accept-Encoding": "gzip",
+                            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8,ja;q=0.7,zh-TW;q=0.6"
+                       }
+                    });
+                    readStream.pipe(fs.createWriteStream(baseUrl + "/" + info.comic_name + "/" + info.comic_index + "/" + index));
+                    readStream.on('end', function() {
+                        console.log('文件下载成功', info.comic_index + "/" + index);
+                        innerCall('');
+                    });
+                    readStream.on('error', function(err) {
+                        console.log("错误信息:" + err, info.comic_index + "/" + index);
+                        innerCall('');
+                    })
+                }
             });
         });
         // 数据
