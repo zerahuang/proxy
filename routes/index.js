@@ -17,6 +17,22 @@ router.get('/', function(req, res, next) {
 		return false;
 	}
 	}
+
+    // 判断是否需要本地
+    if (req.query.path) {
+        // var baseUrl = '/Users/huangshaolu/Documents/comics';
+        var baseUrl = '/root/comics';
+        try {
+            fs.statSync(baseUrl + "/" + decodeURIComponent(req.query.path));
+            // 有之
+            res.set('Content-Type', 'image/jpeg');
+            fs.createReadStream(baseUrl + "/" + decodeURIComponent(req.query.path)).pipe(res);
+            return true;
+        } catch (e) {
+            // 没有的继续
+        }
+    }
+
 	if (!req.query.image) {
 		res.jsonp({ret: 1, msg: "param err"});
 		return false;

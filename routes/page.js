@@ -1107,7 +1107,7 @@ exports.getcharsinfo = function (req, res, next) {
                                 if (_turl.indexOf("wszwhg") != -1 && !/\.jpe?g$/i.test(_turl) && !/index=\d+$/.test(_turl)) {
                                     _turl += "_fixed.jpg";
                                 }
-                                if (_turl.indexOf("wszwhg") != -1) {
+                                if (_turl.indexOf("wszwhg") != -1 || _turl.indexOf("n1yf1.dodomh.com") != -1 || _turl.indexOf("n1fy.guoguomh.com") != -1 || _turl.indexOf("resnyf.pyzgz.com") != -1) {
                                     // 随机ip
                                     // var _ips = ["115.221.116.21", "60.169.40.251"];
                                     // _ips = _ips[Math.floor(_ips.length * Math.random())];
