@@ -37,7 +37,7 @@ router.get('/', function(req, res, next) {
             return true;
         } catch (e) {
             // 没有的，就302
-            res.writeHead(302, {'Location': _url});
+            res.writeHead(302, {'Location': _url + (_url.indexOf('?') != -1 ? '&' : '?') + "_t=" + Math.round(new Date().getTime() / (1000 * 60 * 5))});
             res.end();
             return false;
         }
