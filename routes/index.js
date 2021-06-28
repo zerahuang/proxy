@@ -18,10 +18,17 @@ router.get('/', function(req, res, next) {
 	}
 	}
 
+	if (!req.query.image) {
+		res.jsonp({ret: 1, msg: "param err"});
+		return false;
+	}
+    var _url = decodeURIComponent(req.query.image);
+	_url = "https://" + _url.replace(/^https?:\/\//, "");
+	
     // 判断是否需要本地
     if (req.query.path) {
         // var baseUrl = '/Users/huangshaolu/Documents/comics';
-        var baseUrl = '/root/comics';
+        var baseUrl = '/opt/comics';
         try {
             fs.statSync(baseUrl + "/" + decodeURIComponent(req.query.path));
             // 有之
@@ -29,16 +36,12 @@ router.get('/', function(req, res, next) {
             fs.createReadStream(baseUrl + "/" + decodeURIComponent(req.query.path)).pipe(res);
             return true;
         } catch (e) {
-            // 没有的继续
+            // 没有的，就302
+            res.writeHead(302, {'Location': _url});
+            res.end();
+            return false;
         }
     }
-
-	if (!req.query.image) {
-		res.jsonp({ret: 1, msg: "param err"});
-		return false;
-	}
-	var _url = decodeURIComponent(req.query.image);
-	_url = "http://" + _url.replace(/^https?:\/\//, "");
 	// var _purl = url.parse(_url);
 	var options = {
         url: _url,

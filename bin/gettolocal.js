@@ -5,7 +5,7 @@ var async = require("async");
 var fs = require("fs");
 
 // var baseUrl = '/Users/huangshaolu/Documents/comics';
-var baseUrl = '/root/comics';
+var baseUrl = '/opt/comics';
 
 function getList (name) {
     comicsDao.queryById(function (err, data) {
