@@ -30,8 +30,14 @@ router.get('/', function(req, res, next) {
         // var baseUrl = '/Users/huangshaolu/Documents/comics';
         var baseUrl = '/opt/comics';
         try {
-            fs.statSync(baseUrl + "/" + decodeURIComponent(req.query.path));
+            var _pic = fs.statSync(baseUrl + "/" + decodeURIComponent(req.query.path));
             // 有之
+            // 判断大小，如果是0size，就当没有
+            if (!_pic.size) {
+                // 空的
+                throw new Error('size Error')
+                return false;
+            }
             res.set('Content-Type', 'image/jpeg');
             fs.createReadStream(baseUrl + "/" + decodeURIComponent(req.query.path)).pipe(res);
             return true;

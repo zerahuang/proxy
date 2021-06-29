@@ -7,7 +7,7 @@ var fs = require("fs");
 // var baseUrl = '/Users/huangshaolu/Documents/comics';
 var baseUrl = '/opt/comics';
 
-function getList (name) {
+function getList (name, outcall, allnew) {
     comicsDao.queryById(function (err, data) {
         if (err || !(data && data[0])) {
             console.log(err, data, '异常1');
@@ -60,12 +60,15 @@ function getList (name) {
                     var funcs = [];
                     data2.data.forEach(function (ceil, index) {
                         funcs.push(function (innerCall) {
-                            downloadOne(ceil, innerCall);
+                            downloadOne(ceil, innerCall, allnew);
                         });
                     });
                     // 数据
-                    async.parallelLimit(funcs, 3, function(err, data) {
-                        console.log("", JSON.stringify(data));
+                    async.parallelLimit(funcs.slice(0,+data[0].charactor_counts), 3, function(err, data) {
+                        // console.log("", JSON.stringify(data));
+                        setTimeout(function () {
+                            outcall && outcall('', data);
+                        }, 3000);
                     });
                 }
             }, {
@@ -82,7 +85,7 @@ function getList (name) {
 }
 
 // 下载一个章节
-function downloadOne (info, callback) {
+function downloadOne (info, callback, allnew) {
     try {
         fs.statSync(baseUrl + "/" + info.comic_name + "/" + info.comic_index);
     } catch (e) {
@@ -100,7 +103,7 @@ function downloadOne (info, callback) {
                 try {
                     var fileinfo = fs.statSync(baseUrl + "/" + info.comic_name + "/" + info.comic_index + "/" + index);
 
-                    if (!fileinfo.size) {
+                    if (!fileinfo.size || allnew) {
                         // console.log(fileinfo);
                         // 为空
                         throw new Error('size Error')
@@ -108,6 +111,15 @@ function downloadOne (info, callback) {
                     }
                     innerCall('');
                 } catch (e) {
+                    function docall (a, b) {
+                        clearTimeout(_timer);
+                        docall = function () {}
+                        innerCall(a, b);
+                    }
+                    var _timer = setTimeout(function () {
+                        console.log('超时了');
+                        docall('');
+                    }, 15000);
                     var readStream = request({
                         url: ceil + (ceil.indexOf("?") != -1 ? '&' : '?') + "t=" + Math.random(),
                         headers: {
@@ -125,11 +137,11 @@ function downloadOne (info, callback) {
                     readStream.pipe(fs.createWriteStream(baseUrl + "/" + info.comic_name + "/" + info.comic_index + "/" + index));
                     readStream.on('end', function() {
                         console.log('文件下载成功', info.comic_index + "/" + index);
-                        innerCall('');
+                        docall('');
                     });
                     readStream.on('error', function(err) {
                         console.log("错误信息:" + err, info.comic_index + "/" + index);
-                        innerCall('');
+                        docall('');
                     })
                 }
             });
@@ -143,4 +155,20 @@ function downloadOne (info, callback) {
 }
 
 // downloadOne();
-getList("youma--1491");
+if (process.argv[2]) {
+    getList("youma--" + process.argv[2], function (err, data) {
+        console.log(data);
+    }, process.argv[3]);
+} else {
+    var funcs = [];
+    ["1404", "10046", "1518", "10113", "10882", "10120", "1396", "1386", "1382", "1145", "10002", "10084", "1623", "1420", "1096", "1102", "10042", "269", "972", "10228", "10144", "1126", "10156", "10921", "241", "1093", "968", "10007", "10095", "1248", "1407", "243", "10005", "176"].forEach(function (ceil, index) {
+        funcs.push(function (innerCall) {
+            getList("youma--" + ceil, innerCall);
+        });
+    });
+    // 数据
+    async.parallelLimit(funcs, 1, function(err, data) {
+        // console.log("", JSON.stringify(data));
+        console.log(data);
+    });
+}
