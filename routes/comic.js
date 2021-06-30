@@ -3318,6 +3318,406 @@ exports.buildComic5 = function (req, res, next) {
     }
 }
 
+
+// 构建有码漫画
+exports.buildComic16 = function (req, res, next) {
+	// request 统一加上重试一次
+	// var _oriRequest = request;
+	function requestTry (url, callit, times) {
+		var _hasBack = false;
+		var _tt = setTimeout(function () {
+			// 重试吧
+			if (!times) {
+				console.log("链接：" + url + " 请求超时，准备重试第一次");
+				// _doback = function () {};
+				_hasBack = true;
+				// 可以重试
+				requestTry (url, callit, 1);
+			} else if (times == 1) {
+				console.log("链接：" + url + " 请求超时，准备重试第二次");
+				// _doback = function () {};
+				_hasBack = true;
+				// 可以重试
+				requestTry (url, callit, 2);
+			} else {
+				console.log("链接：" + url + " 再次超时，不再重试了");
+				// 不支持重试了.
+				_doback();
+			}
+		}, 20000);
+
+		var _doback = function (e, d) {
+			if (_tt) {
+				clearTimeout(_tt);
+			}
+			if (_hasBack) return false;
+			_hasBack = true;
+			// _doback = function () {};
+			callit(e, d);
+		};
+
+		request({
+			url: url, 
+			headers: {
+				"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36",
+				"Cookie": "mc_user_id=f77cQnbyNNkAf-yq4uO6s%2Fq%2FPOclt86heZk8wG6CgZC6; mc_user_login=9a22U3sGzOtk3zkQQKftCa-hYvM%2FtDoVzbO96a4QGyFUeFRqbALgdyVyET1DKkAvEJc3TE-h62C7NJV%2FvA"
+			}
+		}, _doback);
+	}
+
+	var cid = "";
+	// 二选一吧
+	if (req.query.comicname) {
+		var reg = /（全集无删减）|\(全集无删减\)|（无删减）|\(无删减\)|（全集）|\(全集\)|（完结）|\(完结\)/g;
+		// 是漫画名
+		request({
+            url: "https://www.05mh.com/index.php/search?key=" + encodeURIComponent(req.query.comicname.replace(reg, "")) + "&_t=" + Math.random(), 
+            strictSSL: false
+        }, function (err, data) {
+            try {
+                data = data.body.replace(/[\r\n\t]/g,"");
+                data = data.match(/<a class="acgn-thumbnail" href="(?:(?!target="_blank").)+target="_blank"/g);
+
+                data = data.filter(function (cceil) {return sim.simplify(cceil.match(/title="([^"]+)"/)[1].replace(/漫画$/, '').replace(reg, "")) == sim.simplify(req.query.comicname.replace(reg, ""))});
+                if (data && data[0] && data[0].match(/href="\/comic\/([^"]+)"/)[1]) {
+                	// 有的
+                	cid = data[0].match(/href="\/comic\/([^"]+)"/)[1];
+                	comicsDao.queryList(function (err3, data3) {
+                		// console.log(err3, data3);
+                		if (err3) {
+                			res.jsonp({
+				            	ret: 17,
+				            	msg: err3
+				            });
+                		} else {
+                			data3 = data3.data.filter(function (ceil) {return ceil.name.indexOf("youma--") != -1});
+                			if (data3.length) {
+                				handleData(data3);
+                			} else {
+                				// 不存在，就去构建吧
+                				handleData("");
+                			}
+                		}
+                	}, {
+		       			z_ch_name: {
+		       				type: "=",
+		       				value: req.query.comicname
+		       			}
+		       		})
+                } else {
+                	// 没有
+                	console.log("没有" + req.query.comicname);
+                	res.jsonp({
+		            	ret: 15,
+		            	msg: "没有" + req.query.comicname
+		            });
+		            return false;
+                }
+            } catch(e) {
+            	// 没有数据
+            	console.log(e, req.query.comicname);
+            	res.jsonp({
+	            	ret: 16,
+	            	msg: req.query.comicname + " " + e.toString()
+	            });
+	            return false;
+            }
+        });
+        return false;
+	} else {
+		// 一定要有漫画名字
+		if (!req.query.comicid) {
+			res.jsonp({ret: 1, msg: "param err"});
+			return false;
+		}
+		// 要抓一下数据，判断是否有替代资源
+		comicsDao.queryById(function (err3, data3) {
+			handleData(data3);
+	   	}, "youma--" + req.query.comicid);
+	}
+
+	function handleData (data3) {
+		// 是否之前有
+		var evergot = "";
+		if (data3 && data3[0]) {
+			evergot = data3[0].name.replace("youma--", "");
+		}
+
+  //  		if (data3 && data3[0] && data3[0].replacesource) {
+  //  			if (data3[0].replacesource == "empty") {
+  //  				res.jsonp({
+	 //            	ret: 14,
+	 //            	msg: "是empty"
+	 //            });
+	 //            return false;
+  //  			} else {
+  //  				var sourceurl = data3[0].replacesource;
+  //  			}
+  //  		} else {
+   			var sourceurl = "https://www.05mh.com/comic/" + (req.query.comicid || cid);
+   		// }
+   		requestTry(sourceurl, function (err, data) {
+			try {
+				try {
+					data = data.body.replace(/[\r\n\t]/g,"");
+				} catch (e){
+					console.log(sourceurl, err, data);
+					res.jsonp({
+		            	ret: 4,
+		            	msg: "获得数据报错"
+		            });
+		            return false;
+				}
+		        
+		        // console.log(data.match(/chapter-list-1(?:(?!<\/ul>).)+<\/ul>/)[0]);
+		        // console.log(data);
+		        // var temChars = data.match(/<a class="j-chapter-link" href="\/chapter\/\d+(?:(?!<\/a>).)+<\/a>/g);
+		        var charlist = data.match(/var chapter_list = ([^\]]+)\]/)[1] + "]";
+		        var temChars = JSON.parse(charlist.replace(/'/g, "\""));
+		        var charactors = [];
+		        temChars.forEach(function (ceil) {
+	        		charactors.push({
+		                url: "https://www.05mh.com" + ceil.url,
+		                id: ceil.id,
+		                // name: ceil.match(/>([^>]+)<i>/)[1]
+		                name: ceil.name
+		            });
+		        });
+		        // charactors.reverse();
+		        // 获得中文名
+		        var zname = data.match(/<title>(.+)漫画下拉式/)[1];
+		        // 获得其他信息
+		        var comicinfo = {
+		        	name: "youma--" + (evergot ? evergot : (10000 + +cid)),
+		        	z_ch_name: zname,
+		        	charactor_counts: charactors.length,
+		        	share_reward: 3,
+		        	ad_reward: 1,
+		        	freechars: charactors.length < 10 ? 2 : 5,
+		        	listwidth: "350",
+		        	charactors: "韩国",
+		        	limitinfo: 1,
+		        	replacesource: sourceurl
+		        };
+
+		        // 获得作者信息
+		        // var author = data.match(/原著作者：<\/em>([^<]*)<\/p>/);
+		        // var author = data.match(/<img class="avatar" src="[^"]+" alt="([^"]+)/);
+		        // if (author) {
+		        // 	comicinfo.author = author[1].trim().replace(/amp;/g, "");
+		        // }
+		        // 获得类目信息
+		        // var tags = data.match(/booklist\/\?tag=([^"]+)"/);
+		        // if (tags) {
+		        // 	comicinfo.tags = tags[1].trim();
+		        // }
+		        comicinfo.tags = "韩国";
+		       	// 描述
+		       	// var descs = data.match(/介：<\/em>((?:(?!<a).)+)<a/);
+		       	var descs = data.match(/简介 ：<\/span>\s*((?:(?!<\/p>).)+)\s*<\/p>/);
+		       	if (descs) {
+		       		comicinfo.descs = descs[1].trim().replace(/&hellip;/g, "…");
+		       	} else {
+		       		comicinfo.descs = "";
+		       	}
+
+		       	// 主图
+	       		// comicinfo.indexpic = "https://p.youma.org/static/upload/book/" + req.query.comicid + "/cover.jpg";
+	       		// console.log(data.match(/data-original="([^"]+)"/)[1]);
+	       		// return false;
+	       		comicinfo.indexpic = data.match(/<div class="detail-cover">.+background: url\('([^']+)'.+<\/div>/)[1];
+
+		     	comicsDao.queryById(function (err3, data3) {
+		       		if (data3 && data3.length != 0) {
+		       			// 有数据，有一些是不更新的
+		       			// 要插入的数据
+			       		var _toinsert = {
+					        name: comicinfo.name,
+					        // z_ch_name: comicinfo.z_ch_name,
+					        // author: comicinfo.author,
+					        charactor_counts: comicinfo.charactor_counts,
+					        charactors: comicinfo.charactors,
+					        updatetime: new Date(),
+					        freechars: comicinfo.freechars,
+					        tags: comicinfo.tags,
+					        descs: comicinfo.descs,
+					        indexpic: comicinfo.indexpic,
+				        	replacesource: comicinfo.replacesource
+					        // comments: _b.length ? JSON.stringify(_b) : "",
+					    };
+		       		} else {
+		       			// 要插入的数据
+			       		var _toinsert = {
+					        name: comicinfo.name,
+					        z_ch_name: comicinfo.z_ch_name,
+					        author: "韩国",
+					        charactor_counts: comicinfo.charactor_counts,
+					        tags: comicinfo.tags,
+					        charactors: comicinfo.charactors,
+					        descs: comicinfo.descs,
+					        more: "",
+					        indexpic: comicinfo.indexpic,
+					        share_reward: comicinfo.share_reward,
+					        ad_reward: comicinfo.ad_reward,
+					        freechars: comicinfo.freechars,
+					        listwidth: comicinfo.listwidth,
+					        createtime: new Date(),
+					        updatetime: new Date(),
+					        limitinfo: 1,
+				        	replacesource: comicinfo.replacesource
+					    };
+		       		}
+
+		       		// 获得搜索关键字
+		       		comicsDao.queryList(function (err2, data2) {
+		       			if (err2 || !(data2 && data2.data && data2.data.length)) {
+		       				var searchtags = "";
+		       			} else {
+		       				var searchtags = data2.data[0].searchtags;
+		       			}
+		       			_toinsert.searchtags = searchtags;
+		       			// 先把漫画插入到表中
+				        comicsDao.add(function (err1, data1) {
+					        if (err1) {
+					        	console.log(err1);
+					            // 写入db报错
+					            res.jsonp({
+					            	ret: 4,
+					            	msg: "写入db报错"
+					            });
+					        } else {
+					        	// callback("", "写入db成功");
+					        	// console.log(data1);
+					        	// 还要写入章节表
+					        	// console.log(data1.insertId);
+					        	
+					        	// setTimeout(function () {
+					        	if (req.query.range) {
+					        		var rangestart = req.query.range.split("_")[0];
+					        		var rangeend = req.query.range.split("_")[1];
+					        		rangeend = rangeend || (+rangestart + 1);
+					        		render(data1.insertId, rangestart - 1, rangeend - 1);
+					        	} else {
+					        		render(data1.insertId, req.query.type == 1 ? 0 : (data3 && data3[0] && data3[0].charactor_counts));
+					        	}
+					        	// }, 100);
+
+					        	res.jsonp({
+					            	ret: 0,
+					            	msg: "正在构建中"
+					            });
+					        }
+					    }, _toinsert , {
+					        key: "name"
+					    });
+		       		}, {
+		       			z_ch_name: {
+		       				type: "=",
+		       				value: zname
+		       			}
+		       		}, {pagesize: 10000});
+		       	}, comicinfo.name);
+
+		        function render (comicid, fromlen, tolen) {
+		            var funcs = [];
+		            console.log(fromlen, tolen);
+		            charactors.forEach(function (ceil, index) {
+		                funcs.push(function (innerCall) {
+		                    getPage({
+		                        url: ceil.url,
+		                        name: ceil.name.replace(/\?/g, "").replace(/\:/g, "_"),
+		                        index: index,
+		                        comicid: comicid,
+		                        comicname: comicinfo.name,
+		                        id: ceil.id
+		                    }, function (err, data) {
+		                    	setTimeout(function () {
+		                    		innerCall("", data);
+		                    	}, 5000);
+		                    });
+		                });
+		            });
+		            // 数据fromlen ? funcs.slice(fromlen) : funcs
+		            async.parallelLimit(funcs.slice(3,4), 1, function(err, data) {
+	            	// async.parallelLimit(fromlen && tolen ? funcs.slice(fromlen, tolen) : (fromlen && !tolen) ? funcs.slice(fromlen) : funcs, 1, function(err, data) {
+		            // async.parallelLimit(funcs.slice(5,6), 3, function(err, data) {
+		                // res.jsonp("", JSON.stringify(data));
+			            console.log(JSON.stringify(data));
+		            });
+		        }
+
+	        } catch (e) {
+	        	console.log(sourceurl, e);
+	            // 页面内部解析出错
+	            res.jsonp({
+	            	ret: 4,
+	            	msg: "获得数据报错"
+	            });
+	        }
+		});
+	}
+
+	function getPage (obj, pagecallback) {
+        requestTry("https://www.05mh.com/index.php/api/comic/isbuy?id=" + obj.id, function (err, data) {
+            try {
+            	// console.log(data.body);
+          //   	return false;
+          //       data = data.body.replace(/[\r\n\t]/g,"");
+		        // // 来组合数据吧
+		        // var urls = [];
+
+		        // data.match(/data-original="[^"]+"/g).forEach(function (ceil) {
+		        // 	urls.push(ceil.match(/original="([^"]+)"/)[1]);
+		        // });
+		        var urls = Array.from(JSON.parse(data.body).pic, function (ceil) {
+		        	return ceil.img;
+		        });
+
+		        // console.log(urls);
+                // 获得urls
+                // var chapterImages = JSON.parse(data.match(/var chapterImages = (\[[^\]]+\])/)[1]);
+                // var chapterPath = data.match(/var chapterPath = "([^"]*)"/)[1];
+                // var urls = Array.from(chapterImages, function (ceil) {return /^http/.test(ceil) ? ceil : ("https://mhpic.dongzaojiage.com" + (chapterPath ? "/" + chapterPath : "") + ceil);});
+                // 获得urls之后要做的事情
+                doByUrls(urls);
+                function doByUrls (urls) {
+                	charactorsDao.add(function (err2, data2) {
+                   		if (err2) {
+                   			console.log(err2);
+                   		}
+                   		// console.log("AAAAA", obj + " " + (err2 ? JSON.stringify(err2) : ""));
+                   		console.log("number" + (obj.index + 1) + ". " + obj.name + " exec " + (err2 ? "failed" : "success"));
+			            
+			            // 要写入成功之后，才结束
+			            pagecallback("", err2 ? {
+		                    url: obj.url,
+		                    reason: err2.toString()
+		                } : "");
+			        }, {
+			            name: obj.name,
+			            comic_index: obj.index + 1,
+			            pic_count: urls.length,
+			            comic_name: obj.comicname,
+			            route: obj.comicname + "/" + (obj.index + 1),
+			            read_count: 0,
+			            comic_id: 0,
+			            urls: JSON.stringify(urls)
+			        }, {
+			            key: "route",
+			            tablename: "charactors_" + ("0" + (obj.comicid % 100)).slice(-2)
+			        });
+                }
+            } catch(e) {
+            	// 页面内部解析出错
+                pagecallback("", {
+                    url: obj.url,
+                    reason: e.toString()
+                });
+            }
+        });
+    }
+}
+
 // 构建多多漫画 duoduo--chaoyoubing
 exports.buildComic8 = function (req, res, next) {
 	// chaoyoubing
