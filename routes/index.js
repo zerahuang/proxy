@@ -39,7 +39,15 @@ router.get('/', function(req, res, next) {
                 return false;
             }
             res.set('Content-Type', 'image/jpeg');
-            fs.createReadStream(baseUrl + "/" + decodeURIComponent(req.query.path)).pipe(res);
+            // res.set('Accept-Ranges', 'bytes');
+            // res.set('Cache-Control', 'public, max-age=0');
+            // res.set('Connection', 'keep-alive');
+            // res.set('Date', 'Wed, 30 Jun 2021 02:45:45 GMT');
+            // res.set('ETag', 'W/"2ef64-17a51ea4897"');
+            // res.set('Last-Modified', 'Mon, 28 Jun 2021 09:19:06 GMT');
+
+            res.sendFile(baseUrl + "/" + decodeURIComponent(req.query.path));
+            // fs.createReadStream(baseUrl + "/" + decodeURIComponent(req.query.path)).pipe(res);
             return true;
         } catch (e) {
             // 没有的，就302

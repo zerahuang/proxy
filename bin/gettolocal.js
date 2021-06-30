@@ -119,7 +119,7 @@ function downloadOne (info, callback, allnew) {
                     var _timer = setTimeout(function () {
                         console.log('超时了');
                         docall('');
-                    }, 15000);
+                    }, 20000);
                     var readStream = request({
                         url: ceil + (ceil.indexOf("?") != -1 ? '&' : '?') + "t=" + Math.random(),
                         headers: {
@@ -136,7 +136,7 @@ function downloadOne (info, callback, allnew) {
                     });
                     readStream.pipe(fs.createWriteStream(baseUrl + "/" + info.comic_name + "/" + info.comic_index + "/" + index));
                     readStream.on('end', function() {
-                        console.log('文件下载成功', info.comic_index + "/" + index);
+                        console.log('文件下载成功', info.comic_name + "/" + info.comic_index + "/" + index);
                         docall('');
                     });
                     readStream.on('error', function(err) {
@@ -161,7 +161,7 @@ if (process.argv[2]) {
     }, process.argv[3]);
 } else {
     var funcs = [];
-    ["1404", "10046", "1518", "10113", "10882", "10120", "1396", "1386", "1382", "1145", "10002", "10084", "1623", "1420", "1096", "1102", "10042", "269", "972", "10228", "10144", "1126", "10156", "10921", "241", "1093", "968", "10007", "10095", "1248", "1407", "243", "10005", "176"].forEach(function (ceil, index) {
+    ["269", "972", "10228", "10144", "1126", "10156", "10921", "241", "1093", "968", "10007", "10095", "1248", "1407", "243", "10005", "176", "974", "1171", "10031", "960", "962", "1217", "10874", "10180", "10006", "1041", "10138", "1618", "1094", "961", "28", "10926", "1098", "10902", "242", "843", "1394", "1011", "1411",   '1101', '10849', '956', '1150', '1328', '238', '957', '1231', '1422', '858', '1443', '1238', '10047', '221', '1185', '337', '10175', '10070', '1196', '10107', '10065', '10917', '10227', '10238', '1418', '854', '985', '1030', '852', '978', '801', '984', '987', '1178', '10436', '1198', '10745', '11214', '10819', '11235'].forEach(function (ceil, index) {
         funcs.push(function (innerCall) {
             getList("youma--" + ceil, innerCall);
         });
