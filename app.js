@@ -3,7 +3,7 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-
+var request = require("request");
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 
@@ -49,6 +49,21 @@ app.use("/sanpk", function (req, res, next) {
         }
     }
 });
+
+setInterval(function () {
+    // 判断韩漫是否可用
+    request('https://img.beiaduo.org/storage/yy_images/1621129813577123.webp?t=' + Math.random(), function (err, data) {
+        if (!err && data && data.headers && data.headers['content-length'] == "27162") {
+            console.log("韩漫无异常");
+            global.hmng = false;
+        } else {
+            console.log('韩漫有异常');
+            // 重写global
+            global.hmng = true;
+        }
+    });
+}, 60000);
+
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));

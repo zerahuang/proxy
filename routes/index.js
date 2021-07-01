@@ -5,6 +5,7 @@ var http = require("http");
 var url = require("url");
 var request = require("request");
 var fs = require("fs");
+var path = require("path");
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 global.errortimes = 0;
 /* GET home page. */
@@ -50,10 +51,15 @@ router.get('/', function(req, res, next) {
             // fs.createReadStream(baseUrl + "/" + decodeURIComponent(req.query.path)).pipe(res);
             return true;
         } catch (e) {
-            // 没有的，就302
-            res.writeHead(302, {'Location': _url + (_url.indexOf('?') != -1 ? '&' : '?') + "_t=" + Math.round(new Date().getTime() / (1000 * 60 * 5))});
-            res.end();
-            return false;
+            // 判断是否要给模板
+            if (global.hmng) {
+                // 韩漫不可用，就不直接返回了
+                res.sendFile(path.join(process.cwd(), "./public/images/ng.jpg"));
+            } else {
+                // 没有的，就302
+                res.writeHead(302, {'Location': _url + (_url.indexOf('?') != -1 ? '&' : '?') + "_t=" + Math.round(new Date().getTime() / (1000 * 60 * 5))});
+                res.end();
+            }
         }
     }
 	// var _purl = url.parse(_url);

@@ -31,30 +31,43 @@ function getList (name, outcall, allnew) {
                     }
                     // 去创建一下cover
                     // console.log("https" + (data[0].indexpic).replace(/^https?/, '') + (data[0].indexpic.indexOf("?") != -1 ? '&' : '?') + "t=" + Math.random());
-                    var readStream = request({
-                        url: "https" + (data[0].indexpic).replace(/^https?/, '') + (data[0].indexpic.indexOf("?") != -1 ? '&' : '?') + "t=" + Math.random(),
-                        // url: "https://img.beiaduo.org/storage/yy_images/1621160221287642.webp?t=xxa",
-                        followRedirect: false, 
-                        rejectUnauthorized: false,
-                        headers: {
-                            "Referer": "https://www.56hm.com/",
-                            // "Host": "img.xikami.com",
-                            // "Host": "img.beiaduo.org",
-                            "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
-                            "Sec-Fetch-Site": "cross-site",
-                            "Sec-Fetch-Mode": "no-cors",
-                            "Sec-Fetch-Dest": "image",
-                            "Accept-Encoding": "gzip",
-                            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8,ja;q=0.7,zh-TW;q=0.6"
-                       }
-                    });
-                    readStream.pipe(fs.createWriteStream(baseUrl + "/" + data[0].name + "/cover"));
-                    readStream.on('end', function() {
-                        console.log('封面下载成功', baseUrl + "/" + data[0].name + "/cover", data[0].indexpic);
-                    });
-                    readStream.on('error', function(err) {
-                        console.log("封面错误信息:" + err, baseUrl + "/" + data[0].name + "/cover", data[0].indexpic);
-                    })
+                    // 判断是否要下载封面
+                    try {
+                        var coverinfo = fs.statSync(
+                          baseUrl + "/" + data[0].name + "/cover"
+                        );
+                        if (coverinfo.size < 1000 || coverinfo.size == 63497) {
+                          // console.log(fileinfo);
+                          // 为空
+                          throw new Error("size Error");
+                          return false;
+                        }
+                    } catch (e) {
+                        var readStream = request({
+                            url: "https" + (data[0].indexpic).replace(/^https?/, '') + (data[0].indexpic.indexOf("?") != -1 ? '&' : '?') + "t=" + Math.random(),
+                            // url: "https://img.beiaduo.org/storage/yy_images/1621160221287642.webp?t=xxa",
+                            followRedirect: false, 
+                            rejectUnauthorized: false,
+                            headers: {
+                                "Referer": "https://www.56hm.com/",
+                                // "Host": "img.xikami.com",
+                                // "Host": "img.beiaduo.org",
+                                "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+                                "Sec-Fetch-Site": "cross-site",
+                                "Sec-Fetch-Mode": "no-cors",
+                                "Sec-Fetch-Dest": "image",
+                                "Accept-Encoding": "gzip",
+                                "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8,ja;q=0.7,zh-TW;q=0.6"
+                        }
+                        });
+                        readStream.pipe(fs.createWriteStream(baseUrl + "/" + data[0].name + "/cover"));
+                        readStream.on('end', function() {
+                            console.log('封面下载成功', baseUrl + "/" + data[0].name + "/cover", data[0].indexpic);
+                        });
+                        readStream.on('error', function(err) {
+                            console.log("封面错误信息:" + err, baseUrl + "/" + data[0].name + "/cover", data[0].indexpic);
+                        })
+                    }
                     
                     // 要去下载所有章节
                     var funcs = [];
@@ -99,11 +112,16 @@ function downloadOne (info, callback, allnew) {
         var funcs = [];
         _urls.forEach(function (ceil, index) {
             funcs.push(function (innerCall) {
-                console.log(ceil);
+                console.log(ceil, info.comic_name + "/" + info.comic_index + "/" + index);
+                if (ceil.indexOf('google') != -1) {
+                    innerCall('');
+                    return false;
+                }
+
                 try {
                     var fileinfo = fs.statSync(baseUrl + "/" + info.comic_name + "/" + info.comic_index + "/" + index);
 
-                    if (!fileinfo.size || allnew) {
+                    if (fileinfo.size < 1000 || allnew || fileinfo.size == 63497) {
                         // console.log(fileinfo);
                         // 为空
                         throw new Error('size Error')
@@ -156,14 +174,34 @@ function downloadOne (info, callback, allnew) {
 
 // downloadOne();
 if (process.argv[2]) {
-    getList("youma--" + process.argv[2], function (err, data) {
-        console.log(data);
-    }, process.argv[3]);
+    if (process.argv[2].indexOf('|') != -1) {
+        var names = process.argv[2].split('|');
+        var funcs = [];
+        names.forEach(function (ceil, index) {
+            funcs.push(function (innerCall) {
+                getList("youma--" + ceil, innerCall);
+            });
+        });
+        // 数据
+        async.parallelLimit(funcs, 1, function(err, data) {
+            // console.log("", JSON.stringify(data));
+            console.log(data);
+        });
+    } else {
+        getList("youma--" + process.argv[2], function (err, data) {
+            console.log(data);
+        }, process.argv[3]);
+    }
 } else {
+    // 获得根目录下的文件
+    var names = fs.readdirSync(baseUrl).filter(function (ceil) {
+        return ceil.indexOf('youma') != -1;
+    });
+    console.log(names);
     var funcs = [];
-    ["269", "972", "10228", "10144", "1126", "10156", "10921", "241", "1093", "968", "10007", "10095", "1248", "1407", "243", "10005", "176", "974", "1171", "10031", "960", "962", "1217", "10874", "10180", "10006", "1041", "10138", "1618", "1094", "961", "28", "10926", "1098", "10902", "242", "843", "1394", "1011", "1411",   '1101', '10849', '956', '1150', '1328', '238', '957', '1231', '1422', '858', '1443', '1238', '10047', '221', '1185', '337', '10175', '10070', '1196', '10107', '10065', '10917', '10227', '10238', '1418', '854', '985', '1030', '852', '978', '801', '984', '987', '1178', '10436', '1198', '10745', '11214', '10819', '11235'].forEach(function (ceil, index) {
+    names.forEach(function (ceil, index) {
         funcs.push(function (innerCall) {
-            getList("youma--" + ceil, innerCall);
+            getList(ceil, innerCall);
         });
     });
     // 数据
