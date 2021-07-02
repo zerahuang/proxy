@@ -61,6 +61,7 @@ router.get('/', function(req, res, next) {
                 res.end();
             }
         }
+        return false;
     }
 	// var _purl = url.parse(_url);
 	var options = {
@@ -115,6 +116,7 @@ router.get('/', function(req, res, next) {
     }
 
     request(options).on('error', function(err) {
+        console.log(err);
         doback();
     }).pipe(res);
     
