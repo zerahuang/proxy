@@ -38,7 +38,7 @@ function dotask () {
 function doasync () {
     // 判断是否需要重启，如果getIPAdress连续3次是空的，那就重启吧
     var nowip = getIPAdress();
-    if (!nowip) {
+    if (!/^\d+\.\d+\.\d+\.\d+$/.test(nowip)) {
         if (_noipCount >= 3) {
             _noipCount = 0;
             // 重启吧
