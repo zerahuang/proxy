@@ -8,16 +8,26 @@ var _noipCount = 0;
 
 function getIPAdress () {
     var interfaces = os.networkInterfaces();
+    var _ips = [];
     for (var devName in interfaces) {
         if (devName != 'eth0') {
             var iface = interfaces[devName];
             for (var i = 0; i < iface.length; i++) {
                 var alias = iface[i];
                 if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal) {
-                    return alias.address;
+                    _ips.push(alias);
                 }
             }
         }
+    }
+    if (_ips.length == 0) {
+        return '';
+    } else if (_ips.length == 1) {
+        return _ips[0].address;
+    } else {
+        return Array.from(_ips, function (ceil) {
+            return ceil.address;
+        })
     }
 }
 
@@ -38,13 +48,15 @@ function dotask () {
 function doasync () {
     // 判断是否需要重启，如果getIPAdress连续3次是空的，那就重启吧
     var nowip = getIPAdress();
-    if (!/^\d+\.\d+\.\d+\.\d+$/.test(nowip)) {
+    console.log(nowip, _noipCount);
+    if (nowip instanceof Array || !/^\d+\.\d+\.\d+\.\d+$/.test(nowip)) {
         if (_noipCount >= 3) {
             _noipCount = 0;
             // 重启吧
             // 邮件通知一下
-            basic.mailme(fs.readFileSync('name.txt').toString().replace(/\n$/, '') + '重启', '代理机器要重启了');
-
+            // basic.mailme(fs.readFileSync('name.txt').toString().replace(/\n$/, '') + '重启', '代理机器要重启了');
+            console.log("代理机器要重启了");
+            
             setTimeout(function () {
                 cp.exec('reboot');
             }, 3000);
