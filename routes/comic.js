@@ -3638,8 +3638,8 @@ exports.buildComic16 = function (req, res, next) {
 		                });
 		            });
 		            // 数据fromlen ? funcs.slice(fromlen) : funcs
-		            async.parallelLimit(funcs.slice(3,4), 1, function(err, data) {
-	            	// async.parallelLimit(fromlen && tolen ? funcs.slice(fromlen, tolen) : (fromlen && !tolen) ? funcs.slice(fromlen) : funcs, 1, function(err, data) {
+		            // async.parallelLimit(funcs.slice(3,4), 1, function(err, data) {
+	            	async.parallelLimit(fromlen && tolen ? funcs.slice(fromlen, tolen) : (fromlen && !tolen) ? funcs.slice(fromlen) : funcs, 1, function(err, data) {
 		            // async.parallelLimit(funcs.slice(5,6), 3, function(err, data) {
 		                // res.jsonp("", JSON.stringify(data));
 			            console.log(JSON.stringify(data));

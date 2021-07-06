@@ -87,6 +87,10 @@ router.get('/', function(req, res, next) {
 	    }
 	};
 
+    if (_url.indexOf('xikami') != -1) {
+        options.headers["Referer"] = "https://www.05mh.com/";
+    }
+    
     function doback () {
         try {
             req.query.times = /^\d+$/.test(req.query.times) ? req.query.times : 0;
