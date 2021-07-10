@@ -268,10 +268,6 @@ function doit (item, callback) {
         }
       }, {
         jsonp: function (data) {
-          callback("", {
-            name: item.z_ch_name,
-            msg: "更新成功",
-          });
         }
       }, function () {});
     } else if (item.name.indexOf("duoduo--") != -1) {
