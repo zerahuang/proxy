@@ -3472,7 +3472,7 @@ exports.buildComic16 = function (req, res, next) {
 		        // console.log(data.match(/chapter-list-1(?:(?!<\/ul>).)+<\/ul>/)[0]);
 		        // console.log(data);
 		        // var temChars = data.match(/<a class="j-chapter-link" href="\/chapter\/\d+(?:(?!<\/a>).)+<\/a>/g);
-		        var charlist = data.match(/var chapter_list = ([^\]]+)\]/)[1] + "]";
+		        var charlist = data.match(/var chapter_list = ([^;]+);/)[1];
 		        var temChars = JSON.parse(charlist.replace(/'/g, "\""));
 		        var charactors = [];
 		        temChars.forEach(function (ceil) {
