@@ -12,22 +12,26 @@ router.get('*', function(req, res, next) {
   // res.send(req.url);
   // 根据users/aa路由
   switch (req.url.replace(/\?.+/, "").replace(/^\//, "")) {
-    case "start": 
-        start(req, res, next);
-        break;
-    case "stop": 
-        stop(req, res, next);
-        break;
+    case "start":
+      start(req, res, next);
+      break;
+    case "stop":
+      stop(req, res, next);
+      break;
     case "cwight":
-        cwight(req, res, next);
-        break;
+      cwight(req, res, next);
+      break;
     case "asyncip":
-        asyncip(req, res, next);
-        break;
+      asyncip(req, res, next);
+      break;
     case "pm2restart":
-        pm2restart(req, res, next);
-        break;
-    default: next();
+      pm2restart(req, res, next);
+      break;
+    case "hmstatus":
+      hmstatus(req, res, next);
+      break;
+    default:
+      next();
   }
 });
 
@@ -217,6 +221,11 @@ function pm2restart (req, res, next) {
     }, 10);
 }
 
+// 同步
+function hmstatus (req, res, next) {
+    global.hmng = req.query.hmstatus == 1;
+    res.jsonp({ ret: new Date().toGMTString() });
+}
 // 获得ip
 function getIPAdress () {
     var interfaces = os.networkInterfaces();
