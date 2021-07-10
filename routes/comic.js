@@ -3530,21 +3530,26 @@ exports.buildComic16 = function (req, res, next) {
 		     	comicsDao.queryById(function (err3, data3) {
 		       		if (data3 && data3.length != 0) {
 		       			// 有数据，有一些是不更新的
-		       			// 要插入的数据
+		       			// 要更新的数据
 			       		var _toinsert = {
 					        name: comicinfo.name,
 					        // z_ch_name: comicinfo.z_ch_name,
 					        // author: comicinfo.author,
-					        charactor_counts: comicinfo.charactor_counts,
-					        charactors: comicinfo.charactors,
+					        // charactor_counts: comicinfo.charactor_counts,
+					        // charactors: comicinfo.charactors,
 					        updatetime: new Date(),
-					        freechars: comicinfo.freechars,
-					        tags: comicinfo.tags,
-					        descs: comicinfo.descs,
-					        indexpic: comicinfo.indexpic,
-				        	replacesource: comicinfo.replacesource
+					        // freechars: comicinfo.freechars,
+					        // tags: comicinfo.tags,
+					        // descs: comicinfo.descs,
+					        // indexpic: comicinfo.indexpic,
+				        	// replacesource: comicinfo.replacesource
 					        // comments: _b.length ? JSON.stringify(_b) : "",
 					    };
+						if (comicinfo.charactor_counts - data3[0].charactor_counts > 0) {
+							// 新数据章节比较多
+							_toinsert.charactor_counts = comicinfo.charactor_counts;
+							_toinsert.freechars = comicinfo.freechars;
+						}
 		       		} else {
 		       			// 要插入的数据
 			       		var _toinsert = {
@@ -3701,7 +3706,7 @@ exports.buildComic16 = function (req, res, next) {
 			            route: obj.comicname + "/" + (obj.index + 1),
 			            read_count: 0,
 			            comic_id: 0,
-			            urls: JSON.stringify(urls)
+			            burls: JSON.stringify(urls)
 			        }, {
 			            key: "route",
 			            tablename: "charactors_" + ("0" + (obj.comicid % 100)).slice(-2)
