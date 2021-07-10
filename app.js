@@ -52,7 +52,9 @@ app.use("/sanpk", function (req, res, next) {
 
 setInterval(function () {
     // 判断韩漫是否可用
-    request('https://img.beiaduo.org/storage/yy_images/1621129813577123.webp', function (err, data) {
+    request('https://img.beiaduo.org/storage/yy_images/1621129813577123.webp', {
+        originalHostHeaderName: 'Host'
+    }, function (err, data) {
         if (!err && data && data.headers && data.headers['content-length'] == "27162") {
             console.log("韩漫无异常");
             global.hmng = false;
