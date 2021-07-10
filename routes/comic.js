@@ -3147,7 +3147,7 @@ exports.buildComic5 = function (req, res, next) {
 					        freechars: comicinfo.freechars,
 					        tags: comicinfo.tags,
 					        descs: comicinfo.descs,
-					        indexpic: comicinfo.indexpic,
+					        // indexpic: comicinfo.indexpic,
 				        	replacesource: comicinfo.replacesource
 					        // comments: _b.length ? JSON.stringify(_b) : "",
 					    };
@@ -3541,7 +3541,7 @@ exports.buildComic16 = function (req, res, next) {
 					        // freechars: comicinfo.freechars,
 					        // tags: comicinfo.tags,
 					        // descs: comicinfo.descs,
-					        // indexpic: comicinfo.indexpic,
+					        indexpic: comicinfo.indexpic,
 				        	// replacesource: comicinfo.replacesource
 					        // comments: _b.length ? JSON.stringify(_b) : "",
 					    };
