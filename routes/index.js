@@ -128,7 +128,7 @@ router.get('/', function(req, res, next) {
         console.log(err);
         var _t = err.toString();
         console.log(222, _t, 111);
-        doback(_t && _t.indexOf("-104") != -1);
+        doback(_t && _t.indexOf("read ECONNRESET") != -1);
     }).pipe(res);
     
     // var _t = request(options, function (error, response, body) {
