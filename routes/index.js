@@ -91,21 +91,26 @@ router.get('/', function(req, res, next) {
         options.headers["Referer"] = "https://www.05mh.com/";
     }
     
-    function doback () {
+    function doback (ishm) {
         try {
             req.query.times = /^\d+$/.test(req.query.times) ? req.query.times : 0;
-            setTimeout(function () {
-                // 判断一下是否需要重启
-                if (global.errortimes >= 10) {
+            if (!ishm) {
+                setTimeout(function () {
+                  // 判断一下是否需要重启
+                  if (global.errortimes >= 10) {
                     // 需要重启
                     console.log("需要重启");
                     var a = null;
                     a.b;
-                } else {
+                  } else {
                     global.errortimes++;
                     console.log("global.errortimes=" + global.errortimes);
-                }
-            }, 10);
+                  }
+                }, 10);
+            } else {
+                console.log("韩漫无需记录");
+            }
+            
             if (req.query.times >= 2) {
                 // 3次了，直接403
                 res.writeHead(403);
@@ -121,7 +126,8 @@ router.get('/', function(req, res, next) {
 
     request(options).on('error', function(err) {
         console.log(err);
-        doback();
+        var _t = err.toString();
+        doback(_t && _t.indexOf("-104") != -1);
     }).pipe(res);
     
     // var _t = request(options, function (error, response, body) {
