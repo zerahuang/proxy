@@ -3372,13 +3372,16 @@ exports.buildComic16 = function (req, res, next) {
 		// 是漫画名
 		request({
             url: "https://www.05mh.com/index.php/search?key=" + encodeURIComponent(req.query.comicname.replace(reg, "")) + "&_t=" + Math.random(), 
-            strictSSL: false
+            strictSSL: false,
+			headers: {
+				"User-Agent": "jdpingou;android;1.0;5.0.1;869511021531997-98e7f57ed6d0;network/wifi;model/HUAWEI GRA-TL00;appBuild/1;;;Mozilla/5.0 (Linux; Android 5.0.1; HUAWEI GRA-TL00 Build/HUAWEIGRA-TL00; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/66.0.3359.126 MQQBrowser/6.2 TBS/044504 Mobile Safari/537.36"
+			}
         }, function (err, data) {
             try {
                 data = data.body.replace(/[\r\n\t]/g,"");
-                data = data.match(/<a class="acgn-thumbnail" href="(?:(?!target="_blank").)+target="_blank"/g);
-
-                data = data.filter(function (cceil) {return sim.simplify(cceil.match(/title="([^"]+)"/)[1].replace(/漫画$/, '').replace(reg, "")) == sim.simplify(req.query.comicname.replace(reg, ""))});
+                data = data.match(/item comic-item(?:(?!<\/li>).)+<\/li>/g);
+				// console.log(data);
+                data = data.filter(function (cceil) {return sim.simplify(cceil.match(/title="([^"]+)"/)[1].split(',')[0].replace(reg, "")) == sim.simplify(req.query.comicname.replace(reg, ""))});
                 if (data && data[0] && data[0].match(/href="\/comic\/([^"]+)"/)[1]) {
                 	// 有的
                 	cid = data[0].match(/href="\/comic\/([^"]+)"/)[1];
@@ -3525,7 +3528,7 @@ exports.buildComic16 = function (req, res, next) {
 	       		// comicinfo.indexpic = "https://p.youma.org/static/upload/book/" + req.query.comicid + "/cover.jpg";
 	       		// console.log(data.match(/data-original="([^"]+)"/)[1]);
 	       		// return false;
-	       		comicinfo.indexpic = data.match(/<div class="detail-cover">.+background: url\('([^']+)'.+<\/div>/)[1];
+	       		comicinfo.indexpic = data.match(/<div class="detail-cover">(?:(?!background).)+background: url\('([^']+)'.+<\/div>/)[1];
 
 		     	comicsDao.queryById(function (err3, data3) {
 		       		if (data3 && data3.length != 0) {

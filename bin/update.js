@@ -261,15 +261,15 @@ function doit (item, callback) {
       }, function () {});
 
       // 更新
-      comicRoute.buildComic16({
-        query: {
-          comicname: item.z_ch_name,
-          type: 1
-        }
-      }, {
-        jsonp: function (data) {
-        }
-      }, function () {});
+      // comicRoute.buildComic16({
+      //   query: {
+      //     comicname: item.z_ch_name,
+      //     type: 1
+      //   }
+      // }, {
+      //   jsonp: function (data) {
+      //   }
+      // }, function () {});
     } else if (item.name.indexOf("duoduo--") != -1) {
       comicRoute.buildComic8({
         query: {
