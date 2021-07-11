@@ -127,6 +127,7 @@ router.get('/', function(req, res, next) {
     request(options).on('error', function(err) {
         console.log(err);
         var _t = err.toString();
+        console.log(222, _t, 111);
         doback(_t && _t.indexOf("-104") != -1);
     }).pipe(res);
     
