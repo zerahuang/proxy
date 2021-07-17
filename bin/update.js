@@ -655,6 +655,10 @@ function doUpdate () {
       value: $formatDate(new Date(new Date() - 3 * 24 * 60 * 60 * 1000), "YYYY-MM-DD HH:II:SS"),
       type: "<"
     },
+    name: {
+      type: "not like",
+      value: "youma"
+    },
     isover: [{
       type: "=",
       value: 0
