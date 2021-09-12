@@ -24,40 +24,81 @@ function doit (item, callback) {
   try {
     if (item.name.indexOf("mh1234--") != -1) {
       // 是getWecUrl2
-      comicRoute.getWecUrl2("https://www.mh1234.com/comic/" + item.name.replace("mh1234--", "") + ".html", item.z_ch_name, function (err2, data2) {
-        // console.log(err2, data2);
-        if (data2 && !/^\[/.test(data2)) {
-          // 有异常，就更新一下
-          // 判断是否到限制
-          if (item.updatetried == 2) {
-            comicsDao.update(function (err3, data3) {
-              callback("", {
-                name: item.z_ch_name + "[" + item.name + "]",
-                msg: "更新失败",
-                err: data2
-              });
-            }, {
-              updatetried: 0,
-              updatetime: new Date()
-            }, item.name);
-          } else {
-            comicsDao.update(function (err3, data3) {
-              callback("", {
-                name: item.z_ch_name + "[" + item.name + "]",
-                msg: "更新失败",
-                err: data2
-              });
-            }, {
-              updatetried: !item.updatetried ? 1 : +item.updatetried + 1
-            }, item.name);
-          }
-        } else {
-          callback("", {
-            name: item.z_ch_name,
-            msg: "更新成功"
-          });
+      // comicRoute.getWecUrl2("https://www.mh1234.com/comic/" + item.name.replace("mh1234--", "") + ".html", item.z_ch_name, function (err2, data2) {
+      //   // console.log(err2, data2);
+      //   if (data2 && !/^\[/.test(data2)) {
+      //     // 有异常，就更新一下
+      //     // 判断是否到限制
+      //     if (item.updatetried == 2) {
+      //       comicsDao.update(function (err3, data3) {
+      //         callback("", {
+      //           name: item.z_ch_name + "[" + item.name + "]",
+      //           msg: "更新失败",
+      //           err: data2
+      //         });
+      //       }, {
+      //         updatetried: 0,
+      //         updatetime: new Date()
+      //       }, item.name);
+      //     } else {
+      //       comicsDao.update(function (err3, data3) {
+      //         callback("", {
+      //           name: item.z_ch_name + "[" + item.name + "]",
+      //           msg: "更新失败",
+      //           err: data2
+      //         });
+      //       }, {
+      //         updatetried: !item.updatetried ? 1 : +item.updatetried + 1
+      //       }, item.name);
+      //     }
+      //   } else {
+      //     callback("", {
+      //       name: item.z_ch_name,
+      //       msg: "更新成功"
+      //     });
+      //   }
+      // });
+
+      comicRoute.buildComic2({
+        query: {
+          comic: item.z_ch_name,
+          type: 1
         }
-      });
+      }, {
+        jsonp: function (data) {
+          if (data && data.ret == 0) {
+            callback("", {
+              name: item.z_ch_name,
+              msg: "更新成功"
+            });
+          } else {
+            // 有异常，就更新一下
+            // 判断是否到限制
+            if (item.updatetried == 2) {
+              comicsDao.update(function (err3, data3) {
+                callback("", {
+                  name: item.z_ch_name + "[" + item.name + "]",
+                  msg: "更新失败",
+                  err: data.err || data.msg
+                });
+              }, {
+                updatetried: 0,
+                updatetime: new Date()
+              }, item.name);
+            } else {
+              comicsDao.update(function (err3, data3) {
+                callback("", {
+                  name: item.z_ch_name + "[" + item.name + "]",
+                  msg: "更新失败",
+                  err: data.err
+                });
+              }, {
+                updatetried: !item.updatetried ? 1 : +item.updatetried + 1
+              }, item.name);
+            }
+          }
+        }
+      }, function () {});
     } else if (item.name.indexOf("dfvcb--") != -1) {
       comicRoute.buildComic3({
         query: {
