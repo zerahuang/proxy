@@ -86,50 +86,79 @@ router.get('/', function(req, res, next) {
 	         "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8,ja;q=0.7,zh-TW;q=0.6"
 	    }
 	};
-
-    if (_url.indexOf('xikami') != -1) {
-        options.headers["Referer"] = "https://www.05mh.com/";
+    if (_url.indexOf("xikami") != -1) {
+      options.headers["Referer"] = "https://www.05mh.com/";
     }
-    
-    function doback (ishm) {
-        try {
-            req.query.times = /^\d+$/.test(req.query.times) ? req.query.times : 0;
-            if (!ishm) {
-                setTimeout(function () {
-                  // 判断一下是否需要重启
-                  if (global.errortimes >= 10) {
-                    // 需要重启
-                    console.log("需要重启");
-                    var a = null;
-                    a.b;
-                  } else {
-                    global.errortimes++;
-                    console.log("global.errortimes=" + global.errortimes);
-                  }
-                }, 10);
+
+    function doback(ishm) {
+      try {
+        req.query.times = /^\d+$/.test(req.query.times) ? req.query.times : 0;
+        if (!ishm) {
+          setTimeout(function () {
+            // 判断一下是否需要重启
+            if (global.errortimes >= 10) {
+              // 需要重启
+              console.log("需要重启");
+              var a = null;
+              a.b;
             } else {
-                console.log("韩漫无需记录");
+              global.errortimes++;
+              console.log("global.errortimes=" + global.errortimes);
             }
-            
-            if (req.query.times >= 2) {
-                // 3次了，直接403
-                res.writeHead(403);
-                res.end();
-            } else {
-                res.writeHead(302, {'Location': "http://onhit.cn/sanpk/comic-proxy3?image=" + encodeURIComponent(_url.replace(/^https?:\/\//, "")) + "&times=" + (+req.query.times + 1)});
-                res.end();
-            }
-        } catch(e) {
-            console.log(e, 'timeout');
+          }, 10);
+        } else {
+          console.log("韩漫无需记录");
         }
+
+        if (req.query.times >= 2) {
+          // 3次了，直接403
+          res.writeHead(403);
+          res.end();
+        } else {
+          res.writeHead(302, {
+            Location:
+              "http://onhit.cn/sanpk/comic-proxy3?image=" +
+              encodeURIComponent(_url.replace(/^https?:\/\//, "")) +
+              "&times=" +
+              (+req.query.times + 1),
+          });
+          res.end();
+        }
+      } catch (e) {
+        console.log(e, "timeout");
+      }
     }
 
-    request(options).on('error', function(err) {
-        console.log(err);
-        var _t = err.toString();
-        console.log(222, _t, 111);
-        doback(_t && _t.indexOf("read ECONNRESET") != -1);
-    }).pipe(res);
+    function getPic() {
+        request(options)
+          .on("error", function (err) {
+            console.log(err);
+            var _t = err.toString();
+            console.log(222, _t, 111);
+            doback(_t && _t.indexOf("read ECONNRESET") != -1);
+          })
+          .pipe(res);
+    }
+
+    // 判断是否需要预先302
+    if (/view\/\?chapter_id/.test(_url)) {
+        request({
+          url: _url,
+          method: "GET",
+          timeout: 8000,
+          pool: { maxSockets: Infinity },
+          followRedirect: false,
+        }, function (err, data) {
+            if (data.headers.location) {
+                options.url = data.headers.location;
+                getPic();
+            } else {
+                getPic();
+            }
+        });
+    } else {
+        getPic()
+    }
     
     // var _t = request(options, function (error, response, body) {
     //     // if (!error && response.statusCode == 200) {

@@ -62,7 +62,7 @@ function doit (item, callback) {
       comicRoute.buildComic2({
         query: {
           comic: item.z_ch_name,
-          type: 1
+          // type: 1
         }
       }, {
         jsonp: function (data) {
