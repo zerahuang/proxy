@@ -1162,7 +1162,7 @@ exports.buildComic2 = function (req, res, next) {
 	}
 
 	// 去mh1234搜一下
-	request("https://m.mh1234.com/search/?keywords=" + encodeURIComponent(req.query.comic), function (err, data0) {
+	request("https://m.zxkai.com/search/?keywords=" + encodeURIComponent(req.query.comic), function (err, data0) {
 
 		if (!(data0 && data0.body)) {
 			res.jsonp({ret: 3, msg: "找不到漫画"});
@@ -1266,8 +1266,8 @@ function getWecUrl2 (link, zname, callback, getisover, forceall) {
 	}
 
     // https://www.mh1234.com/comic/18015.html
-    console.log(link.replace("www.mh1234.com/", "m.mh1234.com/"));
-    requestTry(link.replace("www.mh1234.com/", "m.mh1234.com/"), function (err, data) {
+	console.log(link.replace("www.zxkai.com/", "m.zxkai.com/"));
+	requestTry(link.replace("www.zxkai.com/", "m.zxkai.com/"), function (err, data) {
     	try {
 	        // console.log(data.body);
 	        // return false;
@@ -1501,7 +1501,7 @@ function getWecUrl2 (link, zname, callback, getisover, forceall) {
 
 
     function getPage (obj, pagecallback, trytime) {
-        requestTry("https://m.mh1234.com" + obj.url.replace("/wap/comic", "/comic"), function (err, data) {
+		requestTry("https://m.zxkai.com" + obj.url.replace("/wap/comic", "/comic"), function (err, data) {
             try {
                 data = data.body.replace(/[\r\n\t]/g,"");
                 // console.log(data);
@@ -1521,7 +1521,7 @@ function getWecUrl2 (link, zname, callback, getisover, forceall) {
 			            
 			            // 要写入成功之后，才结束
 			            pagecallback("", err2 ? {
-		                    url: "https://m.mh1234.com" + obj.url.replace("/wap/comic", "/comic"),
+							url: "https://m.zxkai.com" + obj.url.replace("/wap/comic", "/comic"),
 		                    reason: err2.toString()
 		                } : "");
 			        }, {
@@ -1545,7 +1545,7 @@ function getWecUrl2 (link, zname, callback, getisover, forceall) {
             	} else {
             		// 页面内部解析出错
 	                pagecallback("", {
-	                    url: "https://m.mh1234.com" + obj.url.replace("/wap/comic", "/comic"),
+						url: "https://m.zxkai.com" + obj.url.replace("/wap/comic", "/comic"),
 	                    reason: e.toString()
 	                });
             	}
