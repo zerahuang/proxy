@@ -77,6 +77,7 @@ router.get('/', function(req, res, next) {
 	         "Pragma": "no-cache",
 	         "Cache-Control": "no-cache",
 	         "Upgrade-Insecure-Requests": "1",
+          "referer": "https://www.gufengmh9.com/",
 	         "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 9_3_2 like Mac OS X) AppleWebKit/601.1.46 (KHTML, like Gecko) Mobile/13F69 MicroMessenger/6.3.9 NetType/WIFI Language/zh_CN",
 	         "Sec-Fetch-Mode": "navigate",
 	         "Sec-Fetch-User": "?1",
